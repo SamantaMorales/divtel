@@ -10,6 +10,11 @@ import astropy.units as u
 from astropy.coordinates import get_moon
 from astropy.coordinates import get_sun
 
+from astropy.visualization import astropy_mpl_style, quantity_support
+
+plt.style.use(astropy_mpl_style)
+quantity_support()
+
     
 class CTA_Info:
 
@@ -327,7 +332,7 @@ class CTA_Info:
 
         plt.plot(self._timestep, src.alt, lw=0.5, alpha=0.5, color="orange")
         plt.scatter(self._timestep, src.alt,
-                    c= src.az, s=8,
+                    c= src.az.value, s=8,
                     cmap='viridis',**kwargs)
 
         plt.fill_between(self._timestep, 0, 90*u.deg,

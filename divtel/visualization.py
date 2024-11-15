@@ -179,7 +179,46 @@ def interactive_barycenter(array, proj="xy", overwrite=True, group=False):
     return new_array
 
 
-def multiplicity_plot(array, fig=None):
+def multiplicity_plot(array, subarray_mult=None, fig=None):
+        if array.table.units == 'rad':
+            array.__convert_units__(toDeg=True)
+
+        coord = array.get_pointing_coord(icrs=False)
+        nside = 512
+        map_multiplicity = np.zeros(hp.nside2npix(nside), dtype=np.float64)
+
+        # Initialize Healpix coordinates
+        counter = np.arange(0, hp.nside2npix(nside))
+        ra, dec = hp.pix2ang(nside, counter, True, lonlat=True)
+        coordinate = SkyCoord(ra=ra*u.deg, dec=dec*u.deg)
+
+        # If subarray_mult is not provided, set all multiplicities to 1
+        if subarray_mult is None:
+            subarray_mult = np.ones(len(array.telescopes))
+
+        # Iterate over telescopes
+        for i, tel in tqdm.tqdm(enumerate(array.telescopes)):
+            pointing = SkyCoord(ra=coord.az[i].degree, dec=coord.alt[i].degree, unit='deg')
+            r_fov = np.arctan((tel.camera_radius / tel.focal).to(u.dimensionless_unscaled)).to(u.deg)
+            mask = coordinate.separation(pointing) < r_fov
+
+            # Add intrinsic multiplicity for this telescope
+            map_multiplicity[mask] += subarray_mult[i]
+        
+        R=np.sqrt(array.hFoV()[0]/np.pi) + 5
+        hp.cartview(map_multiplicity, rot=[array.pointing["az"].value, array.pointing["alt"].value],
+                lonra=[-R,R], latra=[-R,R], nest=True, cmap='viridis', title=f"{array.frame.site} div={array.div}")
+        # Annotate with axis labels:
+        plt.annotate('Right Ascension (degrees)', xy=(0.5, -0.05), xycoords='axes fraction', ha='center', va='center')
+        plt.annotate('Declination (degrees)', 
+                     xy=(-0.05, 0.5), xycoords='axes fraction', 
+                     ha='center', va='center', rotation='vertical')
+        hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
+
+        plt.show()
+
+
+def multiplicity_plot_old(array, fig=None):
    
     nside = 512
     map_multiplicity = np.zeros(hp.nside2npix(nside), dtype=np.int8)

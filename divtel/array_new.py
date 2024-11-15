@@ -22,6 +22,7 @@ import copy
 import healpy as hp
 import tqdm
     
+    
 class Array:
 
     """
@@ -38,50 +39,47 @@ class Array:
     """
 
     def __init__(self, telescope_list, frame=None, pointing2src=False, **kwargs):
-        
+        # Initialization setup remains largely unchanged
         self.telescopes = telescope_list
-
         self._div = 0
-        self._pointing = {"az":0*u.deg, "alt":0*u.deg, "ra": 0*u.deg, "dec": 0*u.deg}
+        self._pointing = {"az": 0*u.deg, "alt": 0*u.deg, "ra": 0*u.deg, "dec": 0*u.deg}
+        self._extra_column_data = None  # Store the extra column if available
 
-        if frame == None:
+        # Frame setup remains the same
+        if frame is None:
             self._frame = CTA_Info(verbose=False, **kwargs)
         else:
             self._frame = copy.copy(frame)
             if pointing2src and (self.frame.source is not None):
-                self.set_pointing_coord(ra = self.frame.source.icrs.ra.deg, 
-                                        dec = self.frame.source.icrs.dec.deg)
+                self.set_pointing_coord(ra=self.frame.source.icrs.ra.deg, dec=self.frame.source.icrs.dec.deg)
 
         self.__make_table__()
 
     def __make_table__(self):
-
-        """
-        Merge rows from Telescope.table
-
-        Returns
-        -------
-        astropy.table
-        """
-        
+        """Create a combined table of telescope data."""
         table = []
-
         for tel in self.telescopes:
-
             table.append(tel.table)
-        
+            
         units = 'rad'
         if hasattr(self, "_table"):
             if hasattr(self._table, "units"):
                 units = self.table.units
-        
+                
         self._table = tab.vstack(table)
-
+        
+        # If the extra column is present, save it separately
+        if len(self._table.colnames) > 5:
+            self._extra_column_data = self._table.columns[5]
+        
+        # Adding a calculated distance column
         self._table.add_column(self._dist2tel(), name="d_tel")
         self._table["d_tel"].unit = u.m
         self._table["d_tel"].info.format = "{:.2f}"
-
+        
         self._table.units = units
+
+    
 
     def __convert_units__(self, toDeg=True):
         """
@@ -203,117 +201,43 @@ class Array:
         """
         return np.array(utils.calc_mean(self.table, params))
 
-    def hFoV_old(self, m_cut=0, return_multiplicity=False):
-        """
-        Return a hyper field of view (hFoV) above a given multiplicity.
-    
-        Parameters
-        ----------
-        m_cut: float, optional
-            the minimum multiplicity
-        return_multiplicity: bool, optional
-            return average and variance of multiplicity
-        full_output: bool, optional
-            return all parameters; multiplicity, overlaps, geoms
-        Returns
-        -------
-        fov: float
-            hFoV
-        m_ave: float
-            average of multiplicity
-        m_var: float
-            variance of multiplicity
-        multiplicity: array
-            array containing multiplicity and corresponding hFoV
-        overlaps: array
-            array containing the number of overlaps for each patch
-        geoms: shapely.ops.polygonize
-            geometry of each patch
-        """
-        if self.table.units == 'rad':
-            self.__convert_units__(toDeg=True)
-        
-        coord = self.get_pointing_coord(icrs=False)
-        nside = 512
-        map_multiplicity = np.zeros(hp.nside2npix(nside), dtype=np.int8)
-        counter = np.arange(0, hp.nside2npix(nside))
-        ra, dec = hp.pix2ang(nside, counter, True, lonlat=True)
-        coordinate = SkyCoord(ra=ra*u.deg, dec=dec*u.deg)
-        for i in tqdm.tqdm(range(len(self.telescopes))):
-            pointing = SkyCoord(ra=coord.az[i].degree, dec= coord.alt[i].degree, unit='deg')
-            r_fov = np.arctan((self.telescopes[i].camera_radius/self.telescopes[i].focal).to(u.dimensionless_unscaled)).to(u.deg)
-            mask = coordinate.separation(pointing) < r_fov
-            map_multiplicity[mask] += 1
-
-       
-        mask_fov = map_multiplicity> m_cut
-        #mask_fov_eff = map_multiplicity>3
-
-        hfov = hp.nside2pixarea(nside, True)*np.sum(mask_fov)
-        m_ave = np.mean(map_multiplicity[mask_fov])
-        return hfov, m_ave     
-
-    
-    def hFoV(self, m_cut=0, return_multiplicity=False, subarray_mult=None):
-        """   
-        Return a hyper field of view (hFoV) above a given multiplicity with optional subgroup handling.
-    
-        Parameters
-        ----------
-        m_cut: float, optional
-            the minimum multiplicity
-        return_multiplicity: bool, optional
-            return average and variance of multiplicity
-        full_output: bool, optional
-            return all parameters; multiplicity, overlaps, geoms
-        Returns
-        -------
-        fov: float
-            hFoV
-        m_ave: float
-            average of multiplicity
-        m_var: float
-            variance of multiplicity
-        multiplicity: array
-            array containing multiplicity and corresponding hFoV
-        overlaps: array
-            array containing the number of overlaps for each patch
-        geoms: shapely.ops.polygonize
-            geometry of each patch
-        """
+    def hFoV(self, m_cut=0, return_multiplicity=False, full_output=False):
+        """Calculate hyper field of view (hFoV) with optional subgroup handling."""
         # Unit conversion remains the same
         if self.table.units == 'rad':
             self.__convert_units__(toDeg=True)
 
         coord = self.get_pointing_coord(icrs=False)
         nside = 512
-        map_multiplicity = np.zeros(hp.nside2npix(nside), dtype=np.float64)
-
-        # Initialize Healpix coordinates
+        map_multiplicity = np.zeros(hp.nside2npix(nside), dtype=np.int8)
+        map_multiplicity = map_multiplicity.astype(np.float64)
         counter = np.arange(0, hp.nside2npix(nside))
         ra, dec = hp.pix2ang(nside, counter, True, lonlat=True)
         coordinate = SkyCoord(ra=ra*u.deg, dec=dec*u.deg)
 
-        # If subarray_mult is not provided, set all multiplicities to 1
-        if subarray_mult is None:
-            subarray_mult = np.ones(len(self.telescopes))
+        # Determine whether to use the extra column for group size weighting
+        use_group_size = self._extra_column_data is not None
 
-        # Iterate over telescopes
-        for i, tel in tqdm.tqdm(enumerate(self.telescopes)):
+        for i,tel in tqdm.tqdm(enumerate (self.telescopes)):
             pointing = SkyCoord(ra=coord.az[i].degree, dec=coord.alt[i].degree, unit='deg')
             r_fov = np.arctan((tel.camera_radius / tel.focal).to(u.dimensionless_unscaled)).to(u.deg)
             mask = coordinate.separation(pointing) < r_fov
+    
+            if use_group_size:
+                # Use values from the extra column if present
+                map_multiplicity[mask] *= self._extra_column_data[i]
+                
+            else:
+                map_multiplicity[mask] += 1
+                
 
-            # Add intrinsic multiplicity for this telescope
-            map_multiplicity[mask] += subarray_mult[i]
-
-        # Calculate the hFoV and average multiplicity
         mask_fov = map_multiplicity > m_cut
         hfov = hp.nside2pixarea(nside, True) * np.sum(mask_fov)
         m_ave = np.mean(map_multiplicity[mask_fov])
+        
+        return hfov,m_ave
 
-        return hfov, m_ave
-
+    
     def update_frame(self, site=None, time=None, delta_t=None, verbose=False):
         """
         Update class.CTA_Info parameters (site and/or observation time)
@@ -501,18 +425,7 @@ class Array:
         """
         return visual.skymap_polar(self, group=group, fig=fig, filename=filename)
 
-    def multiplicity_plot(self, subarray_mult=None, fig=None):
-        """
-        Plot multiplicity
-
-        Parameters
-        ----------
-        fig: pyplot.figure, optional
-        """
-            
-        return visual.multiplicity_plot(self, subarray_mult, fig=fig)
-    
-    def multiplicity_plot_old(self, fig=None):
+    def multiplicity_plot(self, fig=None):
         """
         Plot multiplicity
 
@@ -522,7 +435,7 @@ class Array:
         """
         
             
-        return visual.multiplicity_plot_old(self, fig=fig)
+        return visual.multiplicity_plot(self, fig=fig)
 
     def export_cfg(self, filename=None, outdir="./", verbose=False):
         """
