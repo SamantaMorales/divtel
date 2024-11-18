@@ -14,8 +14,8 @@ from .cta import CTA_Info
 
 from astropy.coordinates import SkyCoord
 
-from shapely.ops import unary_union, polygonize
-from shapely.geometry import LineString, Point
+#from shapely.ops import unary_union, polygonize
+#from shapely.geometry import LineString, Point
 
 import copy 
 
@@ -432,9 +432,14 @@ class Array:
         if type(group) == dict:
             groupping = np.zeros(self.size_of_array)
             labels = []
+            number_of_telescopes_subarray=[]
             j = 1
-            for key in group.keys():
-                labels.append(key)
+            for key, indices in group.items():
+                labels.append(key) #labels are like 1,2,3,4
+                index_of_sub_telescope= 0 #we start it at 0
+                for idx in indices: #here I am working witht the ones inside 
+                    index_of_sub_telescope += 1 
+                number_of_telescopes_subarray.append(index_of_sub_telescope)
                 for i in group[key]:
                     groupping[i-1] = j
                 j+=1
@@ -445,7 +450,7 @@ class Array:
         else:
             tel_group = self._table.group_by(np.zeros(self.size_of_array))
             labels = ["_nolegend_"]
-        return (tel_group, labels)
+        return (tel_group, labels, number_of_telescopes_subarray)
     
 
  

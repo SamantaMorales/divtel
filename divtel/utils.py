@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from shapely.ops import unary_union, polygonize
-from shapely.geometry import LineString, Point
+#from shapely.ops import unary_union, polygonize
+#from shapely.geometry import LineString, Point
 
 import astropy.units as u
 
