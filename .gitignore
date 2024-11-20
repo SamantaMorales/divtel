@@ -621,5 +621,5 @@ MigrationBackup/
 config/MAGIC/
 config/*.txt
 config/*.cfg
-examples/notebooks
+examples/*
 
