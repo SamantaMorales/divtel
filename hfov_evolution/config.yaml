@@ -1,0 +1,13 @@
+system:
+ daytime: 2023-02-06T20:00 # utc observing time in isot format PARANAL time = UTC -3h
+ divergence: #0.0022,0.008,0.0043,0.0022    # if divergence field is empty all div will be studied
+ site: south
+ configuration: alpha #can be baseline or alpha
+ multiplicity_cut: 3
+
+
+star: #sirius   # if star field is empty a list of default stars will be studied
+obs_hours: 8 #number of observing hours (don't leave empty)
+header: True   #create header for txt file?
+verbose: True
+outfile: Time_test_north_T20.00  #name only, no extension
