@@ -428,7 +428,7 @@ class Array:
             self.__make_table__()
     
     def group_by(self, group = None):
-        
+        number_of_telescopes_subarray=[]
         if type(group) == dict:
             groupping = np.zeros(self.size_of_array)
             labels = []
@@ -470,7 +470,7 @@ class Array:
         -------
         ax: `matplotlib.pyplot.axes`
         """
-        tel_group, labels = self.group_by(group)
+        tel_group, labels, number_of_telescopes_subarray = self.group_by(group)
 
         if projection == 'skymap':
             for i, [table, label] in enumerate(zip(tel_group.groups, labels)):
