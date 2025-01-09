@@ -409,7 +409,6 @@ class Array:
         """
 
         self.set_pointing_coord(ra=ra, dec = dec, alt=alt, az=az, units=units)
-
         self._div = div
         
         if np.abs(div) > 1: #or div < 0:
@@ -426,6 +425,71 @@ class Array:
                 
         
             self.__make_table__()
+
+
+    def divergent_pointing_2_div(self, tel_group_2, div1, div2, ra=None, dec = None, alt=None, az=None, units="deg"):
+        """
+        Divergent pointing given two parameters div1 and div2.
+        The idea is to use a 2 divergence to have two telecopes and not only one. So I am giving it two different sets of telescopes in group 1 and         group 2. The self stays because I need it... maybe though we should think about this! Well in the case we have two different ones it means  
+        that we will have 2 different telescopes groups but maybe it makes sense.... so the question is how to work with these? Do we slice the 
+        array? And how to slice them giving them a limit? hmmmm these changes things But the idea, maybe, it would be to just use them separetly. 
+        This would be interesting as well to do the visulization and all for a MST and SST toegther later on to plot them one above an other..... 
+        Hmmmmmmmm but in that case.... hmmmmmmmmmmmmmmm..... as well in the multiplicity plot. Okay so or either split them in a sense here or 
+        split them in the program and than give them as an array. For the beginning to see if it works I will split them in the program and give it 
+        here just the arrays. An other question is how can we put together different telescopes
+         Update pointing of all telescopes of the array.
+
+        Parameters
+        ----------
+        div1: float between 0 and 1
+        div1: float between 0 and 1
+        ra: float, optioanl
+            source ra 
+        dec: float, optional
+            source dec 
+        alt: float, optional
+            mean alt pointing
+        az: float, optional
+            mean az pointing
+        units: string, optional
+            either 'deg' (default) or 'rad'
+        """
+
+        self.set_pointing_coord(ra=ra, dec = dec, alt=alt, az=az, units=units)
+
+        self._div = div1
+
+        tel_group_2.set_pointing_coord(ra=ra, dec = dec, alt=alt, az=az, units=units)
+
+        tel_group_2._div = div2
+        
+        if np.abs(div1) > 1: #or div < 0:
+            print("[Error] The div abs value should be lower and 1.")
+        if np.abs(div2) > 1: #or div < 0:
+            print("[Error] The div abs value should be lower and 1.")    
+        elif div1 != 0 and div2 != 0:
+            G1 = pointing.pointG_position(self.barycenter, self.div, self.pointing["alt"], self.pointing["az"])
+
+            
+            G2 = pointing.pointG_position(tel_group_2.barycenter, tel_group_2.div, tel_group_2.pointing["alt"], tel_group_2.pointing["az"])
+            for tel_1 in self.telescopes:
+                alt_tel_1, az_tel_1 = pointing.tel_div_pointing(tel_1.position, G1)
+                if div1 < 0:
+                    az_tel_1=az_tel_1 - np.pi 
+                tel_1.__point_to_altaz__(alt_tel_1*u.rad, az_tel_1*u.rad)
+            for tel_2 in tel_group_2.telescopes:
+                alt_tel_2, az_tel_2 = pointing.tel_div_pointing(tel_2.position, G2)
+                if div2<0:
+                    az_tel_2=az_tel_2 - np.pi
+                tel_2.__point_to_altaz__(alt_tel_2*u.rad, az_tel_2*u.rad)
+                
+                
+        
+            self.__make_table__()
+            tel_group_2.__make_table__()
+
+           # combined_table = self.__make_table__() +  tel_group_2.__make_table__()
+    
     
     def group_by(self, group = None):
         number_of_telescopes_subarray=[]
@@ -506,7 +570,7 @@ class Array:
         """
         return visual.skymap_polar(self, group=group, fig=fig, filename=filename)
 
-    def multiplicity_plot(self, subarray_mult=None, fig=None):
+    def multiplicity_plot_2_div(self, array_2, subarray_mult_1=None, subarray_mult_2=None, fig1=None, fig2=None):
         """
         Plot multiplicity
 
@@ -515,7 +579,19 @@ class Array:
         fig: pyplot.figure, optional
         """
             
-        return visual.multiplicity_plot(self, subarray_mult, fig=fig)
+        return visual.multiplicity_plot_2_div(self, array_2, subarray_mult_1, subarray_mult_2, fig1=fig1, fig2=fig2)
+    
+
+    def multiplicity_plot(self, subarray_mult=None,fig=None):
+        """
+        Plot multiplicity
+
+        Parameters
+        ----------
+        fig: pyplot.figure, optional
+        """
+            
+        return visual.multiplicity_plot(self, subarray_mult, fig=fig )
     
     def multiplicity_plot_old(self, fig=None):
         """
@@ -528,6 +604,8 @@ class Array:
         
             
         return visual.multiplicity_plot_old(self, fig=fig)
+
+     
 
     def export_cfg(self, filename=None, outdir="./", verbose=False):
         """

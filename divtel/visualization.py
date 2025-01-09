@@ -14,7 +14,7 @@ from .const import COLORS
 
 from matplotlib.transforms import Affine2D
 from astropy.visualization.wcsaxes import SphericalCircle
-
+import itertools
 import healpy as hp
 import tqdm
 
@@ -177,8 +177,125 @@ def interactive_barycenter(array, proj="xy", overwrite=True, group=False):
     display(ui, out)
 
     return new_array
+def multiplicity_plot_2_div(array, array_2, subarray_mult_1=None, subarray_mult_2=None, fig1=None, fig2=None):
+    """
+    Plot multiplicity for two arrays, side by side.
+
+    Parameters
+    ----------
+    array: Array object
+        First array of telescopes
+    array_2: Array object
+        Second array of telescopes
+    subarray_mult: array_like, optional
+        Multiplicities for the telescopes (default is 1 for all)
+    fig1: matplotlib.figure.Figure, optional
+        First figure for array plot
+    fig2: matplotlib.figure.Figure, optional
+        Second figure for array_2 plot
+    """
+   # if array.table.units == 'rad':
+   #     array.__convert_units__(toDeg=True)
+    
+    #if array_2.table.units == 'rad':
+     #   array_2.__convert_units__(toDeg=True)
+   
+    # Get pointing coordinates for both arrays
+    coord_1 = array.get_pointing_coord(icrs=False)
+   
+    coord_2 = array_2.get_pointing_coord(icrs=False)
+    
+    # Set Healpix resolution (nside)
+    nside = 512
+    map_multiplicity_1 = np.zeros(hp.nside2npix(nside), dtype=np.float64)
+    map_multiplicity_2 = np.zeros(hp.nside2npix(nside), dtype=np.float64)
+
+    # Initialize Healpix coordinates
+    counter = np.arange(0, hp.nside2npix(nside))
+    ra, dec = hp.pix2ang(nside, counter, True, lonlat=True)
+    coordinate = SkyCoord(ra=ra*u.deg, dec=dec*u.deg)
+
+    # Set multiplicities if not provided
+    if subarray_mult_1 is None:
+        subarray_mult_1 = np.ones(len(array.telescopes))
+    if subarray_mult_2 is None:
+        subarray_mult_2 = np.ones(len(array_2.telescopes))
+    total_number= len(array.telescopes) + len(array_2.telescopes)
+    # Plotting for array 1 (map_multiplicity_1)
+    # Create an iterable for both arrays' telescopes
+    array_together=[]
+    array_together.append(array.telescopes)
+    array_together.append(array_2.telescopes)
 
 
+# Plotting for both arrays
+    for i, tel in tqdm.tqdm(enumerate(array.telescopes)):
+        
+            # This is for array.telescopes
+            pointing = SkyCoord(ra=coord_1.az[i].degree, dec=coord_1.alt[i].degree, unit='deg')
+            r_fov = np.arctan((tel.camera_radius / tel.focal).to(u.dimensionless_unscaled)).to(u.deg)
+            mask = coordinate.separation(pointing) < r_fov
+            map_multiplicity_1[mask] += subarray_mult_1[i]
+            print(map_multiplicity_1[mask])
+    for i, tel in tqdm.tqdm(enumerate(array_2.telescopes)):
+        # This is for array_2.telescopes
+            #index_2 = i - len(array.telescopes)
+            pointing_2 = SkyCoord(ra=coord_2.az[i].degree, dec=coord_2.alt[i].degree, unit='deg')
+            mask_2 = coordinate.separation(pointing_2) < r_fov
+            map_multiplicity_2[mask_2] += subarray_mult_2[i]
+    
+         #   print(map_multiplicity_2[mask_2])
+    #combined_map = map_multiplicity_1 + map_multiplicity_2
+    #print(array.table['fov'])
+    #print(array_2.table['fov'])
+    R1 = np.sqrt(array.hFoV()[0] / np.pi) + 5
+    print(R1)
+    #print(array.table['fov'])
+    #print(array_2.table['fov'])
+    R2 = np.sqrt(array_2.hFoV()[0] / np.pi) + 5
+    if R1>R2:
+        R=R1
+    else:
+        R=R2 
+    
+    
+    proj_map_1 = hp.cartview(map_multiplicity_1, rot=[array.pointing["az"].value, array.pointing["alt"].value],
+                         lonra=[-R1, R1], latra=[-R1, R1],  cmap='viridis', nest=True, return_projected_map=True, title=None)
+    proj_map_2 = hp.cartview(map_multiplicity_2, rot=[array_2.pointing["az"].value, array_2.pointing["alt"].value],
+                         lonra=[-R1, R1], latra=[-R1, R1], cmap='viridis', nest=True, return_projected_map=True, title="Map multiplicity 2")
+    combined_map = proj_map_1 + proj_map_2
+    #hp.cartview(combined_map, rot=[array_2.pointing["az"].value, array_2.pointing["alt"].value],
+     #           lonra=[-R2,R2], latra=[-R2,R2], nest=True, cmap='viridis', title=f"{array.frame.site} div1={array.div} div2={array_2.div}")
+    #hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
+    #hp.cartview(combined_map, rot=[array.pointing["az"].value, array.pointing["alt"].value],
+    #            lonra=[-R,R], latra=[-R,R], nest=True, cmap='viridis', title=f"{array.frame.site} div1={array.div} div2={array_2.div}")
+    #hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
+    #hp.cartview(combined_map, rot=[array.pointing["az"].value, array.pointing["alt"].value],
+    #            lonra=[-R,R], latra=[-R,R], nest=True, cmap='viridis', title=f"{array.frame.site} div1={array.div} div2={array_2.div}")
+    #hp.cartview(map_multiplicity_2, rot=[array_2.pointing["az"].value, array_2.pointing["alt"].value],
+     #           lonra=[-R2,R2], latra=[-R2,R2], nest=True, cmap='viridis', title=f"{array_2.frame.site} div2={array_2.div}")
+    #hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
+    #hp.cartview(map_multiplicity_1, rot=[array.pointing["az"].value, array.pointing["alt"].value],
+     #           lonra=[-R1,R1], latra=[-R1,R1], nest=True, cmap='viridis', title=f"{array.frame.site} div1={array.div}")
+    #hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
+# Plot the combined map using Matplotlib
+    plt.imshow(combined_map, origin='lower', extent=[-R2, R2, -R2, R2], cmap='viridis')
+    plt.colorbar(label="Multiplicity")
+    plt.title(f"Combined Map: {array.frame.site} (div1={array.div}, div2={array_2.div})")
+    plt.xlabel('Longitude (deg)')
+    plt.ylabel('Latitude (deg)')
+    plt.grid(color='gray', linestyle='--', linewidth=0.5)
+    plt.show()
+   # print(array.table['fov'])
+    #print(array_2.table['fov'])
+        # Annotate with axis labels:
+   # plt.annotate('Right Ascension (degrees)', xy=(0.5, -0.05), xycoords='axes fraction', ha='center', va='center')
+   # plt.annotate('Declination (degrees)', 
+   #                  xy=(-0.05, 0.5), xycoords='axes fraction', 
+   #                  ha='center', va='center', rotation='vertical')
+   # hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
+
+   # plt.show()
 def multiplicity_plot(array, subarray_mult=None, fig=None):
         if array.table.units == 'rad':
             array.__convert_units__(toDeg=True)
