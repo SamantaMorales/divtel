@@ -279,12 +279,16 @@ def multiplicity_plot_2_div(array, array_2, subarray_mult_1=None, subarray_mult_
      #           lonra=[-R1,R1], latra=[-R1,R1], nest=True, cmap='viridis', title=f"{array.frame.site} div1={array.div}")
     #hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
 # Plot the combined map using Matplotlib
-    plt.imshow(combined_map, origin='lower', extent=[-R2, R2, -R2, R2], cmap='viridis')
-    plt.colorbar(label="Multiplicity")
+    plt.imshow(combined_map, extent=[-R2, R2, -R2, R2], cmap='viridis')
+    cbar = plt.colorbar(label="Multiplicity", orientation='horizontal', pad=0.2, fraction=0.04)
+    cbar.set_label("Multiplicity", size=10)  # Adjust the size of the colorbar label
+    cbar.ax.tick_params(labelsize=8)  # Adjust the size of the tick labels
+
     plt.title(f"Combined Map: {array.frame.site} (div1={array.div}, div2={array_2.div})")
     plt.xlabel('Longitude (deg)')
     plt.ylabel('Latitude (deg)')
     plt.grid(color='gray', linestyle='--', linewidth=0.5)
+
     plt.show()
    # print(array.table['fov'])
     #print(array_2.table['fov'])
