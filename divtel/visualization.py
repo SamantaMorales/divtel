@@ -220,12 +220,9 @@ def multiplicity_plot_2_div(array, array_2, subarray_mult_1=None, subarray_mult_
         subarray_mult_1 = np.ones(len(array.telescopes))
     if subarray_mult_2 is None:
         subarray_mult_2 = np.ones(len(array_2.telescopes))
-    total_number= len(array.telescopes) + len(array_2.telescopes)
-    # Plotting for array 1 (map_multiplicity_1)
-    # Create an iterable for both arrays' telescopes
-    array_together=[]
-    array_together.append(array.telescopes)
-    array_together.append(array_2.telescopes)
+   # total_number= len(array.telescopes) + len(array_2.telescopes)
+   
+   
 
 
 # Plotting for both arrays
@@ -236,7 +233,7 @@ def multiplicity_plot_2_div(array, array_2, subarray_mult_1=None, subarray_mult_
             r_fov = np.arctan((tel.camera_radius / tel.focal).to(u.dimensionless_unscaled)).to(u.deg)
             mask = coordinate.separation(pointing) < r_fov
             map_multiplicity_1[mask] += subarray_mult_1[i]
-            print(map_multiplicity_1[mask])
+            #print(map_multiplicity_1[mask])
     for i, tel in tqdm.tqdm(enumerate(array_2.telescopes)):
         # This is for array_2.telescopes
             #index_2 = i - len(array.telescopes)
@@ -260,16 +257,19 @@ def multiplicity_plot_2_div(array, array_2, subarray_mult_1=None, subarray_mult_
     
     
     proj_map_1 = hp.cartview(map_multiplicity_1, rot=[array.pointing["az"].value, array.pointing["alt"].value],
-                         lonra=[-R1, R1], latra=[-R1, R1],  cmap='viridis', nest=True, return_projected_map=True, title=None)
+                         lonra=[-R1, R1], latra=[-R1, R1],  cmap='viridis', nest=True, return_projected_map=True, title="Map multiplicity 1")
+    hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
+    print("The second map is")
     proj_map_2 = hp.cartview(map_multiplicity_2, rot=[array_2.pointing["az"].value, array_2.pointing["alt"].value],
-                         lonra=[-R1, R1], latra=[-R1, R1], cmap='viridis', nest=True, return_projected_map=True, title="Map multiplicity 2")
+                         lonra=[-R2, R2], latra=[-R2, R2], cmap='viridis', nest=True, return_projected_map=True, title="Map multiplicity 2")
+    hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
     combined_map = proj_map_1 + proj_map_2
     #hp.cartview(combined_map, rot=[array_2.pointing["az"].value, array_2.pointing["alt"].value],
      #           lonra=[-R2,R2], latra=[-R2,R2], nest=True, cmap='viridis', title=f"{array.frame.site} div1={array.div} div2={array_2.div}")
     #hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
     #hp.cartview(combined_map, rot=[array.pointing["az"].value, array.pointing["alt"].value],
     #            lonra=[-R,R], latra=[-R,R], nest=True, cmap='viridis', title=f"{array.frame.site} div1={array.div} div2={array_2.div}")
-    #hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
+    #
     #hp.cartview(combined_map, rot=[array.pointing["az"].value, array.pointing["alt"].value],
     #            lonra=[-R,R], latra=[-R,R], nest=True, cmap='viridis', title=f"{array.frame.site} div1={array.div} div2={array_2.div}")
     #hp.cartview(map_multiplicity_2, rot=[array_2.pointing["az"].value, array_2.pointing["alt"].value],
@@ -277,19 +277,25 @@ def multiplicity_plot_2_div(array, array_2, subarray_mult_1=None, subarray_mult_
     #hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
     #hp.cartview(map_multiplicity_1, rot=[array.pointing["az"].value, array.pointing["alt"].value],
      #           lonra=[-R1,R1], latra=[-R1,R1], nest=True, cmap='viridis', title=f"{array.frame.site} div1={array.div}")
-    #hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
-# Plot the combined map using Matplotlib
-    plt.imshow(combined_map, extent=[-R2, R2, -R2, R2], cmap='viridis')
+    #
+    # Plot the combined map using Matplotlib
+    plt.figure(figsize=(12, 12))
+    plt.imshow(combined_map, extent=[-R1, R1, -R1, R1], cmap='viridis')
+
     cbar = plt.colorbar(label="Multiplicity", orientation='horizontal', pad=0.2, fraction=0.04)
-    cbar.set_label("Multiplicity", size=10)  # Adjust the size of the colorbar label
-    cbar.ax.tick_params(labelsize=8)  # Adjust the size of the tick labels
+    cbar.set_label("Multiplicity", size=10)
+    #cbar.ax.tick_params(labelsize=8)
 
     plt.title(f"Combined Map: {array.frame.site} (div1={array.div}, div2={array_2.div})")
     plt.xlabel('Longitude (deg)')
     plt.ylabel('Latitude (deg)')
-    plt.grid(color='gray', linestyle='--', linewidth=0.5)
+    #plt.grid(color='gray', linestyle='--', linewidth=0.5)
+
+# Adjust layout to push the plot lower
+    plt.subplots_adjust(left=0.1, right=0.9, top=0.8, bottom=0.2)
 
     plt.show()
+    
    # print(array.table['fov'])
     #print(array_2.table['fov'])
         # Annotate with axis labels:

@@ -408,7 +408,7 @@ class Array:
             either 'deg' (default) or 'rad'
         """
 
-        self.set_pointing_coord(ra=ra, dec = dec, alt=alt, az=az, units=units)
+        self.set_pointing_coord(ra=ra, dec = dec, alt=alt, az=az, units=units) #repointing
         self._div = div
         
         if np.abs(div) > 1: #or div < 0:
@@ -469,7 +469,6 @@ class Array:
             print("[Error] The div abs value should be lower and 1.")    
         elif div1 != 0 and div2 != 0:
             G1 = pointing.pointG_position(self.barycenter, self.div, self.pointing["alt"], self.pointing["az"])
-
             
             G2 = pointing.pointG_position(tel_group_2.barycenter, tel_group_2.div, tel_group_2.pointing["alt"], tel_group_2.pointing["az"])
             for tel_1 in self.telescopes:
