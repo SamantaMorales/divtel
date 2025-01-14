@@ -420,6 +420,8 @@ class Array:
                 
                 if div < 0:
                     az_tel=az_tel - np.pi 
+                    radians= az_tel * u.rad
+                    print(radians)
                 	
                 tel.__point_to_altaz__(alt_tel*u.rad, az_tel*u.rad)
                 
@@ -473,21 +475,28 @@ class Array:
             G2 = pointing.pointG_position(tel_group_2.barycenter, tel_group_2.div, tel_group_2.pointing["alt"], tel_group_2.pointing["az"])
             for tel_1 in self.telescopes:
                 alt_tel_1, az_tel_1 = pointing.tel_div_pointing(tel_1.position, G1)
-                if div1 < 0:
+                print(f"the azimuth of tel 1 is{az_tel_1}")
+                if div1 < 0.000000:
                     az_tel_1=az_tel_1 - np.pi 
+                    print(f"It was negative and the az_tel_1 is: {az_tel_1}")
                 tel_1.__point_to_altaz__(alt_tel_1*u.rad, az_tel_1*u.rad)
+                print(f"The azimuth is {tel_1.__point_to_altaz__(alt_tel_1*u.rad, az_tel_1*u.rad)}")
             for tel_2 in tel_group_2.telescopes:
                 alt_tel_2, az_tel_2 = pointing.tel_div_pointing(tel_2.position, G2)
-                if div2<0:
+                
+                print(f"the azimuth of tel_2 is{az_tel_2}")
+                
+                if div2< 0.00000:
+                    
                     az_tel_2=az_tel_2 - np.pi
+                    print(f"divergence negative(convergence) and the azimuth of telescope 2 is actually is{az_tel_2}")
                 tel_2.__point_to_altaz__(alt_tel_2*u.rad, az_tel_2*u.rad)
                 
                 
-        
+
             self.__make_table__()
             tel_group_2.__make_table__()
-
-           # combined_table = self.__make_table__() +  tel_group_2.__make_table__()
+                   # combined_table = self.__make_table__() +  tel_group_2.__make_table__()
     
     
     def group_by(self, group = None):
