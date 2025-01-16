@@ -314,6 +314,92 @@ class Array:
 
         return hfov, m_ave
 
+
+
+    def hFoV_for_2_arrays(self, array_2, m_cut=0, return_multiplicity=False, subarray_mult=None, subarray_mult_2=None):
+        """   
+        Return a hyper field of view (hFoV) above a given multiplicity with optional subgroup handling.
+        Here the idea is to do the same thing as before, getting two arrays and using that
+        Parameters
+        ----------
+        m_cut: float, optional
+            the minimum multiplicity
+        return_multiplicity: bool, optional
+            return average and variance of multiplicity
+        full_output: bool, optional
+            return all parameters; multiplicity, overlaps, geoms
+        Returns
+        -------
+        fov: float
+            hFoV
+        m_ave: float
+            average of multiplicity
+        m_var: float
+            variance of multiplicity
+        multiplicity: array
+            array containing multiplicity and corresponding hFoV
+        overlaps: array
+            array containing the number of overlaps for each patch
+        geoms: shapely.ops.polygonize
+            geometry of each patch
+        """
+        # Unit conversion remains the same
+        if self.table.units == 'rad':
+            self.__convert_units__(toDeg=True)
+
+        if array_2.table.units == 'rad':
+            array_2.__convert_units__(toDeg=True)
+
+        coord = self.get_pointing_coord(icrs=False)
+        coord_2 = array_2.get_pointing_coord(icrs=False)
+        nside = 512
+        map_multiplicity = np.zeros(hp.nside2npix(nside), dtype=np.float64)
+        map_multiplicity_2= np.zeros(hp.nside2npix(nside), dtype=np.float64)
+
+        # Initialize Healpix coordinates
+        counter = np.arange(0, hp.nside2npix(nside))
+        ra, dec = hp.pix2ang(nside, counter, True, lonlat=True)
+        coordinate = SkyCoord(ra=ra*u.deg, dec=dec*u.deg)
+
+        #Inirialize Healpix coordinates for second array, just becausae I want to make sure everything is 
+        #working
+        counter_2 = np.arange(0, hp.nside2npix(nside))
+        ra_2, dec_2 = hp.pix2ang(nside, counter, True, lonlat=True)
+        coordinate_2 = SkyCoord(ra=ra_2*u.deg, dec=dec_2*u.deg)
+
+        # If subarray_mult is not provided, set all multiplicities to 1
+        if subarray_mult is None:
+            subarray_mult = np.ones(len(self.telescopes))
+
+        # If subarray_mult is not provided, set all multiplicities to 1
+        if subarray_mult_2 is None:
+            subarray_mult_2 = np.ones(len(array_2.telescopes))
+
+        # Iterate over telescopes
+        for i, tel in tqdm.tqdm(enumerate(self.telescopes)):
+            pointing = SkyCoord(ra=coord.az[i].degree, dec=coord.alt[i].degree, unit='deg')
+            r_fov = np.arctan((tel.camera_radius / tel.focal).to(u.dimensionless_unscaled)).to(u.deg)
+            mask = coordinate.separation(pointing) < r_fov
+            # Add intrinsic multiplicity for this telescope
+            map_multiplicity[mask] += subarray_mult[i]
+
+         # Iterate over telescopes
+        for i, tel in tqdm.tqdm(enumerate(array_2.telescopes)):
+            pointing_2 = SkyCoord(ra=coord_2.az[i].degree, dec=coord_2.alt[i].degree, unit='deg')
+            r_fov_2 = np.arctan((tel.camera_radius / tel.focal).to(u.dimensionless_unscaled)).to(u.deg)
+            mask_2 = coordinate_2.separation(pointing_2) < r_fov
+            # Add intrinsic multiplicity for this telescope
+            map_multiplicity_2[mask_2] += subarray_mult_2[i]
+            
+        # Calculate the hFoV and average multiplicity
+        mask_fov = map_multiplicity + map_multiplicity_2 > m_cut #Here I am adding both of them so now try
+        hfov = hp.nside2pixarea(nside, True) * np.sum(mask_fov)
+        m_ave = np.mean(map_multiplicity[mask_fov])
+
+        return hfov, m_ave
+
+    
+
     def update_frame(self, site=None, time=None, delta_t=None, verbose=False):
         """
         Update class.CTA_Info parameters (site and/or observation time)

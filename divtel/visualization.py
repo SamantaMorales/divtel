@@ -179,7 +179,9 @@ def interactive_barycenter(array, proj="xy", overwrite=True, group=False):
     return new_array
 def multiplicity_plot_2_div(array, array_2, subarray_mult_1=None, subarray_mult_2=None, fig1=None, fig2=None):
     """
-    Plot multiplicity for two arrays, side by side.
+    Plot multiplicity for two arrays. The first graph is just the first group of telescopes with the given divergence and the second is the second group of telescopes with their given divergence.
+    And the last plot is a combiantion of both of them
+    All the comments seen with the "#" is just to see that everything is working. The first part there is a comment from rad to deg because I had a mistake with it, but I am wokring on implementing the lines
 
     Parameters
     ----------
@@ -189,6 +191,10 @@ def multiplicity_plot_2_div(array, array_2, subarray_mult_1=None, subarray_mult_
         Second array of telescopes
     subarray_mult: array_like, optional
         Multiplicities for the telescopes (default is 1 for all)
+        This is used for the subarrays
+     subarray_mult_2: array_like, optional
+        Multiplicities for the telescopes (default is 1 for all)
+        This is used for the subarrays
     fig1: matplotlib.figure.Figure, optional
         First figure for array plot
     fig2: matplotlib.figure.Figure, optional
@@ -236,10 +242,10 @@ def multiplicity_plot_2_div(array, array_2, subarray_mult_1=None, subarray_mult_
             r_fov_2 = np.arctan((tel.camera_radius / tel.focal).to(u.dimensionless_unscaled)).to(u.deg)
             mask_2 = coordinate.separation(pointing_2) < r_fov_2
             map_multiplicity_2[mask_2] += subarray_mult_2[i]
-         #   print(map_multiplicity_2[mask_2])
-    
+         # print(map_multiplicity_2[mask_2])
     #print(array.table['fov'])
     #print(array_2.table['fov'])
+    #Trying to find the bigest R between the different configurations and taking that as universal
     R1 = np.sqrt(array.hFoV()[0] / np.pi) + 5
     print(R1)
     #print(array.table['fov'])
@@ -249,53 +255,31 @@ def multiplicity_plot_2_div(array, array_2, subarray_mult_1=None, subarray_mult_
         R=R1
     else:
         R=R2 
-    print(f"The length of 1: {len(map_multiplicity_1)}, Length of 2: {len(map_multiplicity_2)}")
-    print(f"Expected size: {12 * nside**2}")
+    #print(f"The length of 1: {len(map_multiplicity_1)}, Length of 2: {len(map_multiplicity_2)}")
+    #print(f"Expected size: {12 * nside**2}")
     #combined_map = map_multiplicity_1 + map_multiplicity_2
-    proj_map_1 = hp.cartview(map_multiplicity_1, rot=[array.pointing["az"].value,
+    #The fist multiplicity plot
+    hp.cartview(map_multiplicity_1, rot=[array.pointing["az"].value,
                                                       array.pointing["alt"].value],
                              lonra=[-R1, R1], latra=[-R1, R1],  cmap='viridis', nest=True,
-                             return_projected_map=True, title="Map multiplicity 1")
+                             return_projected_map=True, title=f"Map multiplicity 1 {array.div}")
     hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
-    print("The second map is")
-    proj_map_2 = hp.cartview(map_multiplicity_2, rot=[array_2.pointing["az"].value,
+    #print("The second map is")
+    #The secod multiplicity plot 
+    hp.cartview(map_multiplicity_2, rot=[array_2.pointing["az"].value,
                                                       array_2.pointing["alt"].value],
                          lonra=[-R2, R2], latra=[-R2, R2], cmap='viridis', nest=True,
-                             return_projected_map=True, title="Map xmultiplicity 2")
+                             return_projected_map=True, title=f"Map multiplicity 2 {array_2.div}")
     hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
+    #The combination of both of them 
     hp.cartview(
         map_multiplicity_1+map_multiplicity_2,rot=[array.pointing["az"].value,
                                                       array.pointing["alt"].value],
                              lonra=[-R, R], latra=[-R, R],  cmap='viridis', nest=True,
-                             return_projected_map=True, title="Map Combination 1 and 2")
+                             return_projected_map=True, title=f"MapCombination1and2{array.div}and{array_2.div}")
     hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
-       #hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
-    #hp.cartview(combined_map, rot=[array_2.pointing["az"].value, array_2.pointing["alt"].value],
-     #           lonra=[-R2,R2], latra=[-R2,R2], nest=True, cmap='viridis', title=f"{array.frame.site} div1={array.div} div2={array_2.div}")
-    #hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
-    #hp.cartview(combined_map, rot=[array.pointing["az"].value, array.pointing["alt"].value],
-    #            lonra=[-R,R], latra=[-R,R], nest=True, cmap='viridis', title=f"{array.frame.site} div1={array.div} div2={array_2.div}")
-    #
-    #hp.cartview(combined_map, rot=[array.pointing["az"].value, array.pointing["alt"].value],
-    #            lonra=[-R,R], latra=[-R,R], nest=True, cmap='viridis', title=f"{array.frame.site} div1={array.div} div2={array_2.div}")
-    #hp.cartview(map_multiplicity_2, rot=[array_2.pointing["az"].value, array_2.pointing["alt"].value],
-     #           lonra=[-R2,R2], latra=[-R2,R2], nest=True, cmap='viridis', title=f"{array_2.frame.site} div2={array_2.div}")
-    #hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
-    #hp.cartview(map_multiplicity_1, rot=[array.pointing["az"].value, array.pointing["alt"].value],
-     #           lonra=[-R1,R1], latra=[-R1,R1], nest=True, cmap='viridis', title=f"{array.frame.site} div1={array.div}")
-
     plt.show()
     
-   # print(array.table['fov'])
-    #print(array_2.table['fov'])
-        # Annotate with axis labels:
-   # plt.annotate('Right Ascension (degrees)', xy=(0.5, -0.05), xycoords='axes fraction', ha='center', va='center')
-   # plt.annotate('Declination (degrees)', 
-   #                  xy=(-0.05, 0.5), xycoords='axes fraction', 
-   #                  ha='center', va='center', rotation='vertical')
-   # hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
-
-   # plt.show()
 def multiplicity_plot(array, subarray_mult=None, fig=None):
         if array.table.units == 'rad':
             array.__convert_units__(toDeg=True)
