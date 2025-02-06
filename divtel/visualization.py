@@ -220,7 +220,6 @@ def multiplicity_plot_2_div(array, array_2, subarray_mult_1=None, subarray_mult_
     counter = np.arange(0, hp.nside2npix(nside))
     ra, dec = hp.pix2ang(nside, counter, True, lonlat=True)
     coordinate = SkyCoord(ra=ra*u.deg, dec=dec*u.deg)
-
     # Set multiplicities if not provided
     if subarray_mult_1 is None:
         subarray_mult_1 = np.ones(len(array.telescopes))
@@ -231,20 +230,18 @@ def multiplicity_plot_2_div(array, array_2, subarray_mult_1=None, subarray_mult_
     for i, tel in tqdm.tqdm(enumerate(array.telescopes)):
             # This is for array.telescopes
             pointing = SkyCoord(ra=coord_1.az[i].degree, dec=coord_1.alt[i].degree, unit='deg')
+            print(f"The az where it is pointing is: {coord_1.az[i].degree}")
             r_fov = np.arctan((tel.camera_radius / tel.focal).to(u.dimensionless_unscaled)).to(u.deg)
             mask = coordinate.separation(pointing) < r_fov
             map_multiplicity_1[mask] += subarray_mult_1[i]
             #print(map_multiplicity_1[mask])
     for i, tel in tqdm.tqdm(enumerate(array_2.telescopes)):
-        # This is for array_2.telescopes
+            # This is for array_2.telescopes
             #index_2 = i - len(array.telescopes)
             pointing_2 = SkyCoord(ra=coord_2.az[i].degree, dec=coord_2.alt[i].degree, unit='deg')
             r_fov_2 = np.arctan((tel.camera_radius / tel.focal).to(u.dimensionless_unscaled)).to(u.deg)
             mask_2 = coordinate.separation(pointing_2) < r_fov_2
             map_multiplicity_2[mask_2] += subarray_mult_2[i]
-         # print(map_multiplicity_2[mask_2])
-    #print(array.table['fov'])
-    #print(array_2.table['fov'])
     #Trying to find the bigest R between the different configurations and taking that as universal
     R1 = np.sqrt(array.hFoV()[0] / np.pi) + 5
     print(R1)
@@ -255,10 +252,8 @@ def multiplicity_plot_2_div(array, array_2, subarray_mult_1=None, subarray_mult_
         R=R1
     else:
         R=R2 
-    #print(f"The length of 1: {len(map_multiplicity_1)}, Length of 2: {len(map_multiplicity_2)}")
-    #print(f"Expected size: {12 * nside**2}")
-    #combined_map = map_multiplicity_1 + map_multiplicity_2
     #The fist multiplicity plot
+   
     hp.cartview(map_multiplicity_1, rot=[array.pointing["az"].value,
                                                       array.pointing["alt"].value],
                              lonra=[-R1, R1], latra=[-R1, R1],  cmap='viridis', nest=True,
@@ -280,6 +275,7 @@ def multiplicity_plot_2_div(array, array_2, subarray_mult_1=None, subarray_mult_
     hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
     plt.show()
     
+
 def multiplicity_plot(array, subarray_mult=None, fig=None):
         if array.table.units == 'rad':
             array.__convert_units__(toDeg=True)
@@ -317,6 +313,7 @@ def multiplicity_plot(array, subarray_mult=None, fig=None):
         hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
 
         plt.show()
+
 
 
 def multiplicity_plot_old(array, fig=None):

@@ -351,7 +351,9 @@ class Array:
             array_2.__convert_units__(toDeg=True)
 
         coord = self.get_pointing_coord(icrs=False)
+        print(coord)
         coord_2 = array_2.get_pointing_coord(icrs=False)
+        print(f"the coord_2 are: {coord_2}")
         nside = 512
         map_multiplicity_1 = np.zeros(hp.nside2npix(nside), dtype=np.float64)
         map_multiplicity_2= np.zeros(hp.nside2npix(nside), dtype=np.float64)
@@ -364,7 +366,7 @@ class Array:
         #Inirialize Healpix coordinates for second array, just becausae I want to make sure everything is 
         #working
         counter_2 = np.arange(0, hp.nside2npix(nside))
-        ra_2, dec_2 = hp.pix2ang(nside, counter, True, lonlat=True)
+        ra_2, dec_2 = hp.pix2ang(nside, counter_2, True, lonlat=True)
         coordinate_2 = SkyCoord(ra=ra_2*u.deg, dec=dec_2*u.deg)
 
         # If subarray_mult is not provided, set all multiplicities to 1
@@ -387,7 +389,7 @@ class Array:
         for i, tel in tqdm.tqdm(enumerate(array_2.telescopes)):
             pointing_2 = SkyCoord(ra=coord_2.az[i].degree, dec=coord_2.alt[i].degree, unit='deg')
             r_fov_2 = np.arctan((tel.camera_radius / tel.focal).to(u.dimensionless_unscaled)).to(u.deg)
-            mask_2 = coordinate_2.separation(pointing_2) < r_fov
+            mask_2 = coordinate_2.separation(pointing_2) < r_fov_2
             # Add intrinsic multiplicity for this telescope
             map_multiplicity_2[mask_2] += subarray_mult_2[i]
             
