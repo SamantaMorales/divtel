@@ -585,7 +585,7 @@ class Array:
 
             self.__make_table__()
             tel_group_2.__make_table__()
-                   # combined_table = self.__make_table__() +  tel_group_2.__make_table__()
+                  
     
     
     def group_by(self, group = None):

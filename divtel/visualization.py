@@ -21,7 +21,7 @@ import tqdm
 
 def display_1d(table, proj, ax=None, labels=None, **kwargs):
     xb = utils.calc_mean(table, proj[0])
-    
+    print(table)
     ax = plt.figure().add_subplot(111) if ax is None else ax
 
     for i, [tels, label] in enumerate(zip(table.groups, labels)):
@@ -82,7 +82,7 @@ def display_3d(table, proj, ax=None, labels=None, **kwargs):
     for axis in ["x", "y", "z"]:
         max_range.append(table[axis].max() - table[axis].min())
     max_range = max(max_range)
-
+    
     for i, [tels, label] in enumerate(zip(table.groups, labels)):
         xx = tels["x"]
         yy = tels["y"]
@@ -101,6 +101,7 @@ def display_3d(table, proj, ax=None, labels=None, **kwargs):
         
         for xb, yb, zb in zip(Xb, Yb, Zb):
             ax.plot([xb], [yb], [zb], 'w')
+            print(xb, yb, zb)
         
     xx = utils.calc_mean(table, proj[0])
     yy = utils.calc_mean(table, proj[1])
@@ -200,15 +201,15 @@ def multiplicity_plot_2_div(array, array_2, subarray_mult_1=None, subarray_mult_
     fig2: matplotlib.figure.Figure, optional
         Second figure for array_2 plot
     """
-    #if array.table.units == 'rad':
-     #   array.__convert_units__(toDeg=True)
+    if array.table.units == 'rad':
+        array.__convert_units__(toDeg=True)
     
-    #if array_2.table.units == 'rad':
-     #   array_2.__convert_units__(toDeg=True)
+    if array_2.table.units == 'rad':
+        array_2.__convert_units__(toDeg=True)
    
     # Get pointing coordinates for both arrays
     coord_1 = array.get_pointing_coord(icrs=False)
-   
+    print(f"The coordinates are {coord_1}")
     coord_2 = array_2.get_pointing_coord(icrs=False)
     
     # Set Healpix resolution (nside)
@@ -229,7 +230,8 @@ def multiplicity_plot_2_div(array, array_2, subarray_mult_1=None, subarray_mult_
    # Plotting for both arrays
     for i, tel in tqdm.tqdm(enumerate(array.telescopes)):
             # This is for array.telescopes
-            pointing = SkyCoord(ra=coord_1.az[i].degree, dec=coord_1.alt[i].degree, unit='deg')
+        #Trying to see if this works and then try to reput it in a more general way
+            pointing = SkyCoord(ra=(coord_1.az[i].degree), dec=coord_1.alt[i].degree, unit='deg')
             print(f"The az where it is pointing is: {coord_1.az[i].degree}")
             r_fov = np.arctan((tel.camera_radius / tel.focal).to(u.dimensionless_unscaled)).to(u.deg)
             mask = coordinate.separation(pointing) < r_fov
