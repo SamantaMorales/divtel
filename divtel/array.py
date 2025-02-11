@@ -343,6 +343,7 @@ class Array:
         geoms: shapely.ops.polygonize
             geometry of each patch
         """
+        
         # Unit conversion remains the same
         if self.table.units == 'rad':
             self.__convert_units__(toDeg=True)
@@ -351,9 +352,9 @@ class Array:
             array_2.__convert_units__(toDeg=True)
 
         coord = self.get_pointing_coord(icrs=False)
-        print(coord)
+       # print(coord)
         coord_2 = array_2.get_pointing_coord(icrs=False)
-        print(f"the coord_2 are: {coord_2}")
+       # print(f"the coord_2 are: {coord_2}")
         nside = 512
         map_multiplicity_1 = np.zeros(hp.nside2npix(nside), dtype=np.float64)
         map_multiplicity_2= np.zeros(hp.nside2npix(nside), dtype=np.float64)
@@ -518,7 +519,7 @@ class Array:
             self.__make_table__()
 
 
-    def divergent_pointing_2_div(self, tel_group_2, div1, div2, ra=None, dec = None, alt=None, az=None, units="deg"):
+    def divergent_pointing_2_div(self, tel_group_2, complete_array, div1, div2, ra=None, dec = None, alt=None, az=None, units="deg"):
         """
         Divergent pointing given two parameters div1 and div2.
         The idea is to use a 2 divergence to have two telecopes and not only one. So I am giving it two different sets of telescopes in group 1 and         group 2. The self stays because I need it... maybe though we should think about this! Well in the case we have two different ones it means  
@@ -547,7 +548,7 @@ class Array:
         """
 
         self.set_pointing_coord(ra=ra, dec = dec, alt=alt, az=az, units=units)
-
+        
         self._div = div1
 
         tel_group_2.set_pointing_coord(ra=ra, dec = dec, alt=alt, az=az, units=units)
@@ -559,13 +560,15 @@ class Array:
         if np.abs(div2) > 1: #or div < 0:
             print("[Error] The div abs value should be lower and 1.")    
         elif div1 != 0 and div2 != 0:
-            G1 = pointing.pointG_position(self.barycenter, self.div, self.pointing["alt"], self.pointing["az"])
-            
-            G2 = pointing.pointG_position(tel_group_2.barycenter, tel_group_2.div, tel_group_2.pointing["alt"], tel_group_2.pointing["az"])
+            #TO put the same barycenter maybe I could just change here instead of self.barycenter put the barycenter of the full_array, ask confirmation. Now at this point I should change the display as well
+            G1 = pointing.pointG_position(complete_array.barycenter, self.div, self.pointing["alt"], self.pointing["az"])
+            print(f"the barycenter for the calculations{complete_array.barycenter}")
+            G2 = pointing.pointG_position(complete_array.barycenter, tel_group_2.div, tel_group_2.pointing["alt"], tel_group_2.pointing["az"])
+            print(f"the barycenter for the calculations of the second divergence{complete_array.barycenter}")
             for tel_1 in self.telescopes:
                 alt_tel_1, az_tel_1 = pointing.tel_div_pointing(tel_1.position, G1)
                # print(f"the azimuth of tel 1 is{az_tel_1}")
-                if div1 < 0.000000:
+                if div1 < 0:
                     az_tel_1=az_tel_1 - np.pi 
                  #   print(f"It was negative and the az_tel_1 is: {az_tel_1}")
                 tel_1.__point_to_altaz__(alt_tel_1*u.rad, az_tel_1*u.rad)
@@ -575,7 +578,7 @@ class Array:
                 
                 #print(f"the azimuth of tel_2 is{az_tel_2}")
                 
-                if div2< 0.00000:
+                if div2< 0:
                     
                     az_tel_2=az_tel_2 - np.pi
                     #print(f"divergence negative(convergence) and the azimuth of telescope 2 is actually is{az_tel_2}")

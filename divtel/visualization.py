@@ -209,7 +209,7 @@ def multiplicity_plot_2_div(array, array_2, subarray_mult_1=None, subarray_mult_
    
     # Get pointing coordinates for both arrays
     coord_1 = array.get_pointing_coord(icrs=False)
-    print(f"The coordinates are {coord_1}")
+    #print(f"The coordinates are {coord_1}")
     coord_2 = array_2.get_pointing_coord(icrs=False)
     
     # Set Healpix resolution (nside)
@@ -232,7 +232,7 @@ def multiplicity_plot_2_div(array, array_2, subarray_mult_1=None, subarray_mult_
             # This is for array.telescopes
         #Trying to see if this works and then try to reput it in a more general way
             pointing = SkyCoord(ra=(coord_1.az[i].degree), dec=coord_1.alt[i].degree, unit='deg')
-            print(f"The az where it is pointing is: {coord_1.az[i].degree}")
+            #print(f"The az where it is pointing is: {coord_1.az[i].degree}")
             r_fov = np.arctan((tel.camera_radius / tel.focal).to(u.dimensionless_unscaled)).to(u.deg)
             mask = coordinate.separation(pointing) < r_fov
             map_multiplicity_1[mask] += subarray_mult_1[i]
