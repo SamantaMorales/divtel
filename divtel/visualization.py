@@ -317,7 +317,7 @@ def multiplicity_plot(array, subarray_mult=None, fig=None):
         plt.show()
 
 
-
+def table_multiplicity(array, subarray_mult=None, fig=None)
 def multiplicity_plot_old(array, fig=None):
    
     nside = 512
