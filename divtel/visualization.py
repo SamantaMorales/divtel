@@ -11,7 +11,7 @@ from astroplan import FixedTarget
 from . import utils
 from .const import COLORS
 #from . import pointing
-
+from adjustText import adjust_text
 from matplotlib.transforms import Affine2D
 from astropy.visualization.wcsaxes import SphericalCircle
 import itertools
@@ -317,7 +317,117 @@ def multiplicity_plot(array, subarray_mult=None, fig=None):
         plt.show()
 
 
-def table_multiplicity(array, subarray_mult=None, fig=None)
+def table_multiplicity(array, subarray_mult=None, maximum_multiplicity=None, step=None, fig=None):
+    """
+       Make the table of the FoV and the multiplicity so we can see the part of the multiplicity that is going for the FoV. The question is how to do it.
+       So basically we are using a part of the hFoV and in the hFoV we could pass it the m_cut so maybe we could do that here, so we get the image and we calculate the hFoV with the m_cut of a certain degree everytime for example we could do 14,13,12,and so on up to 0
+
+        Parameters
+        ----------
+        array: Array object
+            First array of telescopes
+        subarray_mult: array_like, optional
+            Multiplicities for the telescopes (default is 1 for all)
+            This is used for the subarrays
+    
+            fig1: matplotlib.figure.Figure, optional
+            First figure for array plot
+   
+        """
+    if array.table.units == 'rad':
+        array.__convert_units__(toDeg=True)
+    if maximum_multiplicity is None:
+        maximum_multiplicity=13#Actually I could caluclate this
+    if step is None:
+        step=1
+    hFoV_array=[]
+    multiplicities = list(range(1, maximum_multiplicity+1))
+    for i in range(maximum_multiplicity):
+       # print(i+1)
+        hFoV_array.append(array.hFoV(subarray_mult=subarray_mult,m_cut=i+1)[0])
+       # print(hFoV_array)
+    plt.figure(figsize=(8, 6)) 
+    plt.bar(multiplicities, hFoV_array, color='limegreen')
+    plt.xlabel("Multiplicity greater than the number")
+    plt.ylabel("Hyper Field of View (hFoV)")
+    plt.title("hFoV vs. Multiplicity greater than the number")
+    custom_labels = [f'> {m}' for m in multiplicities]
+    plt.xticks(multiplicities, custom_labels)
+    plt.grid(axis='y', alpha=0.4)
+    plt.show()
+    
+
+def combination_bar_graph(array, array_2, subarray_mult=None,subarray_mult_2=None, maximum_multiplicity=None, step=None, fig=None):
+    if array.table.units == 'rad':
+        array.__convert_units__(toDeg=True)
+    if array_2.table.units == 'rad':
+        array_2.__convert_units__(toDeg=True)
+    if maximum_multiplicity is None:
+        maximum_multiplicity=13#Actually I could caluclate this
+    if step is None:
+        step=1
+    hFoV_array=[]
+    hFoV_array_2=[]
+    multiplicities = list(range(1, maximum_multiplicity+1))
+    multiplicities_2= list(range(1, maximum_multiplicity+1))
+    for i in range(maximum_multiplicity):
+       # print(i+1)
+        hFoV_array.append(array.hFoV(subarray_mult=subarray_mult,m_cut=i+1)[0])
+        hFoV_array_2.append(array.hFoV(subarray_mult=subarray_mult_2,m_cut=i+1)[0])
+       # print(hFoV_array)
+    plt.figure(figsize=(8, 6)) 
+    plt.bar(multiplicities, hFoV_array, color='darkmagenta',alpha=0.4)
+    plt.bar(multiplicities_2, hFoV_array_2, color='darkgreen',alpha=0.4)
+    plt.xlabel("Multiplicity greater than the number")
+    plt.ylabel("Hyper Field of View (hFoV)")
+    plt.title("hFoV vs. Multiplicity greater than the number confronting 2 configurations")
+    custom_labels = [f'> {m}' for m in multiplicities]
+    plt.xticks(multiplicities, custom_labels)
+    plt.grid(axis='y', alpha=0.4)
+    plt.show()
+
+
+def combination_bar_graph_av_mult(array, array_2, subarray_mult=None,subarray_mult_2=None, maximum_multiplicity=None, step=None, fig=None):
+    if array.table.units == 'rad':
+        array.__convert_units__(toDeg=True)
+    if array_2.table.units == 'rad':
+        array_2.__convert_units__(toDeg=True)
+    if maximum_multiplicity is None:
+        maximum_multiplicity=13#Actually I could caluclate this
+    if step is None:
+        step=1
+    hFoV_array=[]
+    hFoV_array_2=[]
+    av_mult_array=[]
+    av_mult_array_2=[]
+    multiplicities = list(range(1, maximum_multiplicity+1))
+    multiplicities_2= list(range(1, maximum_multiplicity+1))
+    graph_mult=list(range(5, maximum_multiplicity+1))
+    for i in range(maximum_multiplicity):
+       # print(i+1)
+        av_mult_array.append(array.hFoV(subarray_mult=subarray_mult,m_cut=i+1)[1])
+        av_mult_array_2.append(array.hFoV(subarray_mult=subarray_mult_2,m_cut=i+1)[1])
+        hFoV_array.append(array.hFoV(subarray_mult=subarray_mult,m_cut=i+1)[0])
+        hFoV_array_2.append(array.hFoV(subarray_mult=subarray_mult_2,m_cut=i+1)[0])
+       # print(hFoV_array)
+    plt.figure(figsize=(8, 6)) 
+    plt.scatter(av_mult_array, hFoV_array, color='darkmagenta', alpha=0.6, label='Config 1', marker='o', s=100)
+    plt.scatter(av_mult_array_2, hFoV_array_2, color='darkgreen', alpha=0.6, label='Config 2', marker='s', s=40)
+    texts = []
+    for i, (x, y) in enumerate(zip(av_mult_array, hFoV_array)):
+        texts.append(plt.text(x, y, f"{i+1}", fontsize=9, ha="center", va="bottom", color='darkmagenta'))
+    
+    for i, (x, y) in enumerate(zip(av_mult_array_2, hFoV_array_2)):
+        texts.append(plt.text(x, y, f"{i+1}", fontsize=9, ha="center", va="bottom", color='darkgreen'))
+    
+    adjust_text(texts, only_move={'points':'y', 'text':'y'}) # in case we want arrows: ,arrowprops=dict(arrowstyle='-', color='gray')
+    plt.ylabel("hFoV")
+    plt.xlabel("Average Multiplicity")
+    plt.title("Av Multiplicity vs. hFoV for different values of m_cut")
+    plt.legend()
+    plt.grid(axis='y', alpha=0.1)
+    plt.show()
+    
 def multiplicity_plot_old(array, fig=None):
    
     nside = 512

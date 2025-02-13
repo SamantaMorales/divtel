@@ -9,7 +9,7 @@ import astropy.table as tab
 from . import utils as utils
 from . import visualization as visual
 from . import pointing
-
+from adjustText import adjust_text
 from .cta import CTA_Info
 
 from astropy.coordinates import SkyCoord
@@ -680,7 +680,31 @@ class Array:
         """
             
         return visual.multiplicity_plot_2_div(self, array_2, subarray_mult_1, subarray_mult_2, fig1=fig1, fig2=fig2)
-    
+
+    def table_multiplicity(self, subarray_mult=None, maximum_multiplicity=None, step=None, fig=None):
+        """
+        bar graph of mult and hFov
+        Parameters
+        ----------
+        fig: pyplot.hist, optional
+        """
+
+        return visual.table_multiplicity(self, subarray_mult, fig=fig)
+
+    def combination_bar_graph(self, array_2, subarray_mult=None,subarray_mult_2=None, maximum_multiplicity=None, step=None, fig=None):
+
+         """
+        bar graph mult and hFov of 2 arrat
+        Parameters
+        ----------
+        fig: pyplot.hist, optional
+        """
+
+         return visual.combination_bar_graph(self, array_2, subarray_mult, subarray_mult_2, fig=fig)
+    def combination_bar_graph_av_mult(self, array_2, subarray_mult=None,subarray_mult_2=None, maximum_multiplicity=None, step=None, fig=None):
+
+
+         return visual.combination_bar_graph_av_mult(self, array_2, subarray_mult, subarray_mult_2, fig=fig)
 
     def multiplicity_plot(self, subarray_mult=None,fig=None):
         """
