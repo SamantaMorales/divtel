@@ -415,10 +415,10 @@ def combination_bar_graph_av_mult(array, array_2, subarray_mult=None,subarray_mu
     plt.scatter(av_mult_array_2, hFoV_array_2, color='darkgreen', alpha=0.6, label='Config 2', marker='s', s=40)
     texts = []
     for i, (x, y) in enumerate(zip(av_mult_array, hFoV_array)):
-        texts.append(plt.text(x, y, f"{i+1}", fontsize=9, ha="center", va="bottom", color='darkmagenta'))
+        texts.append(plt.text(x, y, f"{i+1}", fontsize=12, ha="right", va="center", color='darkmagenta'))
     
     for i, (x, y) in enumerate(zip(av_mult_array_2, hFoV_array_2)):
-        texts.append(plt.text(x, y, f"{i+1}", fontsize=9, ha="center", va="bottom", color='darkgreen'))
+        texts.append(plt.text(x, y, f"{i+1}", fontsize=12, ha="left", va="center", color='darkgreen'))
     
     adjust_text(texts, only_move={'points':'y', 'text':'y'}) # in case we want arrows: ,arrowprops=dict(arrowstyle='-', color='gray')
     plt.ylabel("hFoV")
