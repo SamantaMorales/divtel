@@ -402,7 +402,59 @@ class Array:
 
         return hfov, m_ave
 
-    
+    def combiantion_of_FoV( self,number_of_arrays=None, array_2=None, array_3=None, array_4=None, subarray_mult_1=None, subarray_mult_2=None, subarray_mult_3=None, subarray_mult_4=None, m_cut=0):
+        array_1=self
+        if number_of_arrays is None:
+            number_of_arrays=1
+        nside = 512
+        map_multiplicities=[]
+        subarray_different_multiplicities=[]
+        different_arrays=[]
+        map_multiplicity_list = [np.zeros(hp.nside2npix(nside), dtype=np.float64) for _ in range(number_of_arrays)]
+        coord_list=[]
+        if subarray_mult_1 is None:
+                subarray_mult_1 = np.ones(len(self.telescopes))
+        if subarray_mult_2 is None:
+                subarray_mult_2 = np.ones(len(array_2.telescopes))
+        if subarray_mult_3 is None:
+                subarray_mult_3 = np.ones(len(array_3.telescopes))
+        if array_4 is not None and subarray_mult_4 is None:
+                subarray_mult_4 = np.ones(len(array_4.telescopes))
+        combination_map=np.zeros(hp.nside2npix(nside), dtype=np.float64)
+        subarray_different_multiplicities = [x for x in [subarray_mult_1, subarray_mult_2, subarray_mult_3, subarray_mult_4] if x is not None]
+        different_arrays=[array_1, array_2, array_3, array_4]
+        for number_array in range(number_of_arrays):
+          #  print(number_array)
+            coord_list.append(different_arrays[number_array].get_pointing_coord(icrs=False))
+            map_multiplicities.append(np.zeros(hp.nside2npix(nside), dtype=np.float64))
+            counter = np.arange(0, hp.nside2npix(nside))
+            ra, dec = hp.pix2ang(nside, counter, True, lonlat=True)
+            coordinate = SkyCoord(ra=ra*u.deg, dec=dec*u.deg)
+            # Iterate over telescopes
+            for i, tel in tqdm.tqdm(enumerate(different_arrays[number_array].telescopes)):
+               # print(f"The az{coord_list[number_array].az[i].degree}")
+                pointing = SkyCoord(ra=coord_list[number_array].az[i].degree, dec=coord_list[number_array].alt[i].degree, unit='deg')
+                r_fov = np.arctan((tel.camera_radius / tel.focal).to(u.dimensionless_unscaled)).to(u.deg)
+                mask = coordinate.separation(pointing) < r_fov
+               # print(subarray_different_multiplicities[number_array][i])
+                #print( map_multiplicity_list[number_array][mask])
+              #  print(f"the diff_mult{subarray_different_multiplicities[number_array][i]}")
+                map_multiplicity_list[number_array][mask] += subarray_different_multiplicities[number_array][i]
+        
+        
+    # Sum all subarray maps into the combination map
+        for i in range(number_of_arrays):
+           # print(map_multiplicities[i])
+            combination_map += map_multiplicity_list[i]
+            mask_fov = combination_map > m_cut #Here I am adding both of them so now try
+            hfov = hp.nside2pixarea(nside, True) * np.sum(mask_fov)
+           # print(combination_map)
+           # print(mask_fov)
+            m_ave = np.mean(combination_map[mask_fov])
+
+        return hfov, m_ave
+
+            
 
     def update_frame(self, site=None, time=None, delta_t=None, verbose=False):
         """
