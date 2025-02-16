@@ -277,7 +277,131 @@ def multiplicity_plot_2_div(array, array_2, subarray_mult_1=None, subarray_mult_
     hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
     plt.show()
     
+def multiplicity_plot_3_config(array, array_2, array_3, subarray_mult_1=None, subarray_mult_2=None, subarray_mult_3=None, fig1=None, fig2=None, fig3=None):
+    """
+    Plot multiplicity for three different configurations together. This could be helpful when we have MST and SST with two divergences. The first graph is just the first group of telescopes with the given divergence and the second is the second group of telescopes and the third is the third group of telescopes with their given divergence.
+    And the last plot is a combiantion of both of them
+    All the comments seen with the "#" is just to see that everything is working. The first part there is a comment from rad to deg because I had a mistake with it, but I am wokring on implementing the lines
 
+    Parameters
+    ----------
+    array: Array object
+        First array of telescopes
+    array_2: Array object
+        Second array of telescopes
+    array_2: Array object
+        Second array of telescopes
+    subarray_mult: array_like, optional
+        Multiplicities for the telescopes (default is 1 for all)
+        This is used for the subarrays
+     subarray_mult_2: array_like, optional
+        Multiplicities for the telescopes (default is 1 for all)
+
+    subarray_mult_3: array_like, optional
+        Multiplicities for the telescopes (default is 1 for all)
+        This is used for the subarrays
+    fig1: matplotlib.figure.Figure, optional
+        First figure for array plot
+    fig2: matplotlib.figure.Figure, optional
+        Second figure for array_2 plot
+    """
+    if array.table.units == 'rad':
+        array.__convert_units__(toDeg=True)
+    
+    if array_2.table.units == 'rad':
+        array_2.__convert_units__(toDeg=True)
+
+    if array_3.table.units == 'rad':
+        array_3.__convert_units__(toDeg=True)
+   
+    # Get pointing coordinates for both arrays
+    coord_1 = array.get_pointing_coord(icrs=False)
+    #print(f"The coordinates are {coord_1}")
+    coord_2 = array_2.get_pointing_coord(icrs=False)
+
+    coord_3 = array_3.get_pointing_coord(icrs=False)
+    
+    # Set Healpix resolution (nside)
+    nside = 512
+    map_multiplicity_1 = np.zeros(hp.nside2npix(nside), dtype=np.float64)
+    map_multiplicity_2 = np.zeros(hp.nside2npix(nside), dtype=np.float64)
+    map_multiplicity_3 = np.zeros(hp.nside2npix(nside), dtype=np.float64)
+
+    # Initialize Healpix coordinates
+    counter = np.arange(0, hp.nside2npix(nside))
+    ra, dec = hp.pix2ang(nside, counter, True, lonlat=True)
+    coordinate = SkyCoord(ra=ra*u.deg, dec=dec*u.deg)
+    # Set multiplicities if not provided
+    if subarray_mult_1 is None:
+        subarray_mult_1 = np.ones(len(array.telescopes))
+    if subarray_mult_2 is None:
+        subarray_mult_2 = np.ones(len(array_2.telescopes))
+    if subarray_mult_3 is None:
+        subarray_mult_3 = np.ones(len(array_3.telescopes))
+   # total_number= len(array.telescopes) + len(array_2.telescopes)
+   # Plotting for both arrays
+    for i, tel in tqdm.tqdm(enumerate(array.telescopes)):
+            # This is for array.telescopes
+        #Trying to see if this works and then try to reput it in a more general way
+            pointing = SkyCoord(ra=(coord_1.az[i].degree), dec=coord_1.alt[i].degree, unit='deg')
+            #print(f"The az where it is pointing is: {coord_1.az[i].degree}")
+            r_fov = np.arctan((tel.camera_radius / tel.focal).to(u.dimensionless_unscaled)).to(u.deg)
+            mask = coordinate.separation(pointing) < r_fov
+            map_multiplicity_1[mask] += subarray_mult_1[i]
+            #print(map_multiplicity_1[mask])
+    for i, tel in tqdm.tqdm(enumerate(array_2.telescopes)):
+            # This is for array_2.telescopes
+            #index_2 = i - len(array.telescopes)
+            pointing_2 = SkyCoord(ra=coord_2.az[i].degree, dec=coord_2.alt[i].degree, unit='deg')
+            r_fov_2 = np.arctan((tel.camera_radius / tel.focal).to(u.dimensionless_unscaled)).to(u.deg)
+            mask_2 = coordinate.separation(pointing_2) < r_fov_2
+            map_multiplicity_2[mask_2] += subarray_mult_2[i]
+
+    for i, tel in tqdm.tqdm(enumerate(array_3.telescopes)):
+            # This is for array_3.telescopes
+            #index_3 = i - len(array.telescopes)
+            pointing_3 = SkyCoord(ra=coord_3.az[i].degree, dec=coord_3.alt[i].degree, unit='deg')
+            r_fov_3 = np.arctan((tel.camera_radius / tel.focal).to(u.dimensionless_unscaled)).to(u.deg)
+            mask_3= coordinate.separation(pointing_3) < r_fov_3
+            map_multiplicity_3[mask_3] += subarray_mult_3[i]
+    #Trying to find the bigest R between the different configurations and taking that as universal
+    R1 = np.sqrt(array.hFoV()[0] / np.pi) + 5
+    print(R1)
+    #print(array.table['fov'])
+    #print(array_2.table['fov'])
+    R2 = np.sqrt(array_2.hFoV()[0] / np.pi) + 5
+    if R1>R2:
+        R=R1
+    else:
+        R=R2 
+    #The fist multiplicity plot
+    R3 = np.sqrt(array_3.hFoV()[0] / np.pi) + 5
+    hp.cartview(map_multiplicity_1, rot=[array.pointing["az"].value,
+                                                      array.pointing["alt"].value],
+                             lonra=[-R1, R1], latra=[-R1, R1],  cmap='viridis', nest=True,
+                             return_projected_map=True, title=f"Map multiplicity 1 {array.div}")
+    hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
+    #print("The second map is")
+    #The secod multiplicity plot 
+    hp.cartview(map_multiplicity_2, rot=[array_2.pointing["az"].value,
+                                                      array_2.pointing["alt"].value],
+                         lonra=[-R2, R2], latra=[-R2, R2], cmap='viridis', nest=True,
+                             return_projected_map=True, title=f"Map multiplicity 2 {array_2.div}")
+    hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
+
+    hp.cartview(map_multiplicity_3, rot=[array_3.pointing["az"].value,
+                                                      array_3.pointing["alt"].value],
+                         lonra=[-R3, R3], latra=[-R3, R3], cmap='viridis', nest=True,
+                             return_projected_map=True, title=f"Map multiplicity 3 {array_3.div}")
+    hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
+    #The combination of both of them 
+    hp.cartview(
+        map_multiplicity_1+map_multiplicity_2+map_multiplicity_3,rot=[array.pointing["az"].value,
+                                                      array.pointing["alt"].value],
+                             lonra=[-R, R], latra=[-R, R],  cmap='viridis', nest=True,
+                             return_projected_map=True, title=f"MapCombination 2 divergences SST: {array.div}and{array_2.div} MST: {array_3.div}")
+    hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
+    plt.show()
 def multiplicity_plot(array, subarray_mult=None, fig=None):
         if array.table.units == 'rad':
             array.__convert_units__(toDeg=True)

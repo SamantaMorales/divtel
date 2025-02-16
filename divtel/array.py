@@ -681,6 +681,17 @@ class Array:
             
         return visual.multiplicity_plot_2_div(self, array_2, subarray_mult_1, subarray_mult_2, fig1=fig1, fig2=fig2)
 
+    def multiplicity_plot_3_config(self, array_2,array_3, subarray_mult_1=None, subarray_mult_2=None, subarray_mult_3=None,fig1=None, fig2=None, fig3=None):
+        """
+        Plot multiplicity
+
+        Parameters
+        ----------
+        fig: pyplot.figure, optional
+        """
+            
+        return visual.multiplicity_plot_3_config(self, array_2, array_3, subarray_mult_1, subarray_mult_2, subarray_mult_3, fig1=fig1, fig2=fig2, fig3=fig3)
+
     def table_multiplicity(self, subarray_mult=None, maximum_multiplicity=None, step=None, fig=None):
         """
         bar graph of mult and hFov
