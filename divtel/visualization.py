@@ -540,30 +540,27 @@ def combination_bar_graph_av_mult(array, array_2, subarray_mult=None,subarray_mu
     hFoV_array_2=[]
     av_mult_array=[]
     av_mult_array_2=[]
-    multiplicities = list(range(1, maximum_multiplicity+1))
-    multiplicities_2= list(range(1, maximum_multiplicity+1))
-    graph_mult=list(range(5, maximum_multiplicity+1))
     for i in range(maximum_multiplicity):
-       # print(i+1)
-        av_mult_array.append(array.hFoV(subarray_mult=subarray_mult,m_cut=i+1)[1])
-        av_mult_array_2.append(array_2.hFoV(subarray_mult=subarray_mult_2,m_cut=i+1)[1])
-        hFoV_array.append(array.hFoV(subarray_mult=subarray_mult,m_cut=i+1)[0])
-        hFoV_array_2.append(array_2.hFoV(subarray_mult=subarray_mult_2,m_cut=i+1)[0])
+        print(i)
+        av_mult_array.append(array.hFoV(subarray_mult=subarray_mult,m_cut=i)[1])
+        av_mult_array_2.append(array_2.hFoV(subarray_mult=subarray_mult_2,m_cut=i)[1])
+        hFoV_array.append(array.hFoV(subarray_mult=subarray_mult,m_cut=i)[0])
+        hFoV_array_2.append(array_2.hFoV(subarray_mult=subarray_mult_2,m_cut=i)[0])
        # print(hFoV_array)
     plt.figure(figsize=(8, 6)) 
     plt.scatter(av_mult_array, hFoV_array, color='darkmagenta', alpha=0.6, label='Config 1', marker='o', s=100)
     plt.scatter(av_mult_array_2, hFoV_array_2, color='darkgreen', alpha=0.6, label='Config 2', marker='s', s=40)
     texts = []
     for i, (x, y) in enumerate(zip(av_mult_array, hFoV_array)):
-        texts.append(plt.text(x, y, f"{i+1}", fontsize=12, ha="right", va="center", color='darkmagenta'))
+        texts.append(plt.text(x, y, f"{i}", fontsize=12, ha="right", va="center", color='darkmagenta'))
     
     for i, (x, y) in enumerate(zip(av_mult_array_2, hFoV_array_2)):
-        texts.append(plt.text(x, y, f"{i+1}", fontsize=12, ha="left", va="center", color='darkgreen'))
+        texts.append(plt.text(x, y, f"{i}", fontsize=12, ha="right", va="center", color='darkgreen'))
     
-    adjust_text(texts, only_move={'points':'y', 'text':'y'}) # in case we want arrows: ,arrowprops=dict(arrowstyle='-', color='gray')
+   # adjust_text(texts, only_move={'points':'y', 'text':'y'}) # in case we want arrows: ,arrowprops=dict(arrowstyle='-', color='gray')
     plt.ylabel("hFoV")
     plt.xlabel("Average Multiplicity")
-    plt.title("Av Multiplicity vs. hFoV for different values of m_cut")
+    plt.title(f"Av Multiplicity vs. hFoV for different values of m_cut with div : {array.div}")
     plt.legend()
     plt.grid(axis='y', alpha=0.1)
     plt.show()
