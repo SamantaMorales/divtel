@@ -475,7 +475,7 @@ class Array:
 
         self.frame.update(site=site, time=time, delta_t=delta_t, verbose=verbose)
         self.divergent_pointing(self.div, ra=self.pointing["ra"], dec=self.pointing["dec"])
-    
+        
     def get_pointing_coord(self, icrs=True):
         """
         Return pointing coordinates
