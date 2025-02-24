@@ -564,7 +564,47 @@ def combination_bar_graph_av_mult(array, array_2, subarray_mult=None,subarray_mu
     plt.legend()
     plt.grid(axis='y', alpha=0.1)
     plt.show()
+
+def combination_bar_graph_av_mult_MST_and_SST(array, array_2, array_3, subarray_mult=None,subarray_mult_2=None,subarray_mult_3=None, maximum_multiplicity=None,fig=None):
+    if array.table.units == 'rad':
+        array.__convert_units__(toDeg=True)
+    if array_2.table.units == 'rad':
+        array_2.__convert_units__(toDeg=True)
+    if array_3.table.units == 'rad':
+        array_3.__convert_units__(toDeg=True)
+    if maximum_multiplicity is None:
+        maximum_multiplicity=60#Actually I could caluclate this
+   
+    hFoV_array=[]
+   
+    av_mult_array=[]
+   
+    for i in range(20):
+        print(i*3)
+        av_mult_array.append(array.combiantion_of_FoV(number_of_arrays=3, array_2=array_2, array_3=array_3, subarray_mult_1=subarray_mult, subarray_mult_2=subarray_mult_2, subarray_mult_3=subarray_mult_3,m_cut=i*3 )[1])
+        print(array.combiantion_of_FoV(number_of_arrays=3, array_2=array_2, array_3=array_3, subarray_mult_1=subarray_mult, subarray_mult_2=subarray_mult_2, subarray_mult_3=subarray_mult_3, m_cut=i*3))
+        hFoV_array.append(array.combiantion_of_FoV(number_of_arrays=3, array_2=array_2, array_3=array_3, subarray_mult_1=subarray_mult, subarray_mult_2=subarray_mult_2, subarray_mult_3=subarray_mult_3, m_cut=i*3)[0])
+       
+       # print(hFoV_array)
+    plt.figure(figsize=(8, 6)) 
+    plt.scatter(av_mult_array, hFoV_array, color='limegreen', alpha=0.6, label='Combination MST and SST', marker='o', s=100)
+   
+    texts = []
+    for i, (x, y) in enumerate(zip(av_mult_array, hFoV_array)):
+        texts.append(plt.text(x, y, f"{i*3}", fontsize=12, ha="right", va="center", color='darkgreen'))
     
+   
+    
+   # adjust_text(texts, only_move={'points':'y', 'text':'y'}) # in case we want arrows: ,arrowprops=dict(arrowstyle='-', color='gray')
+    plt.ylabel("hFoV")
+    plt.xlabel("Average Multiplicity")
+    plt.title(f"Av Multiplicity vs. hFoV for different values of m_cut with div : {array.div}")
+    plt.legend()
+    plt.grid(axis='y', alpha=0.1)
+    plt.show()
+    
+#Put the i = j in case both of them are the same and just put the same that are different for array of combination of FoV
+
 def multiplicity_plot_old(array, fig=None):
    
     nside = 512
