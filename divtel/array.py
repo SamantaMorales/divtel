@@ -769,6 +769,28 @@ class Array:
 
          return visual.combination_bar_graph_av_mult(self, array_2, subarray_mult, subarray_mult_2, fig=fig)
 
+    def combination_bar_graph(self, array_2, subarray_mult=None,subarray_mult_2=None, maximum_multiplicity=None, step=None, fig=None):
+
+         """
+        bar graph mult and hFov of 2 arrat
+        Parameters
+        ----------
+        fig: pyplot.hist, optional
+        """
+
+         return visual.combination_bar_graph(self, array_2, subarray_mult, subarray_mult_2, fig=fig)
+        
+    def combination_bar_graph_av_mult_MST_and_SST(self, array_2, array_3, subarray_mult=None,subarray_mult_2=None,subarray_mult_3=None, maximum_multiplicity=None,fig=None):
+
+
+          return visual.combination_bar_graph_av_mult_MST_and_SST(self, array_2,array_3, subarray_mult, subarray_mult_2, subarray_mult_3, fig=fig)
+
+
+    def combination_bar_graph_av_mult_SST(self, array_1_2, array_2, subarray_mult=None, subarray_mult_1_2=None, subarray_mult_2=None, maximum_multiplicity=None, step=None, fig=None):
+
+
+        return visual.combination_bar_graph_av_mult_SST(self, array_1_2, array_2, subarray_mult, subarray_mult_1_2, subarray_mult_2, fig=fig)
+
     def multiplicity_plot(self, subarray_mult=None,fig=None):
         """
         Plot multiplicity

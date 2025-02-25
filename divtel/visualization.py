@@ -598,12 +598,52 @@ def combination_bar_graph_av_mult_MST_and_SST(array, array_2, array_3, subarray_
    # adjust_text(texts, only_move={'points':'y', 'text':'y'}) # in case we want arrows: ,arrowprops=dict(arrowstyle='-', color='gray')
     plt.ylabel("hFoV")
     plt.xlabel("Average Multiplicity")
-    plt.title(f"Av Multiplicity vs. hFoV for different values of m_cut with div : {array.div}")
+    plt.title(f"Av Multiplicity vs. hFoV for different values of m_cut with conv : {array.div} div: {array_2.div} and MST div:{array_3.div}")
     plt.legend()
     plt.grid(axis='y', alpha=0.1)
     plt.show()
     
 #Put the i = j in case both of them are the same and just put the same that are different for array of combination of FoV
+
+def combination_bar_graph_av_mult_SST(array, array_1_2, array_2, subarray_mult=None, subarray_mult_1_2=None, subarray_mult_2=None, maximum_multiplicity=None, step=None, fig=None):
+    #array combination of SST: array and array_1_2
+    #array_2  configuration of full no SST subarray
+    if array.table.units == 'rad':
+        array.__convert_units__(toDeg=True)
+    if array_2.table.units == 'rad':
+        array_2.__convert_units__(toDeg=True)
+    if maximum_multiplicity is None:
+        maximum_multiplicity=46#Actually I could caluclate this
+    if step is None:
+        step=1
+    hFoV_array=[]
+    av_mult_array=[]
+    av_mult_array_2=[]
+    hFoV_array_2=[]
+    for i in range(23):
+        print(i*2)
+        av_mult_array.append(array.hFoV_for_2_arrays(array_2=array_1_2, subarray_mult=subarray_mult, subarray_mult_2=subarray_mult_1_2, m_cut=i*2)[1])
+        av_mult_array_2.append(array_2.hFoV(m_cut=i*2)[1])
+        hFoV_array.append(array.hFoV_for_2_arrays(array_2=array_1_2, subarray_mult=subarray_mult, subarray_mult_2=subarray_mult_1_2, m_cut=i*2)[0])
+        hFoV_array_2.append(array_2.hFoV(m_cut=i*2)[0])
+       # print(hFoV_array)
+    plt.figure(figsize=(8, 6)) 
+    plt.scatter(av_mult_array, hFoV_array, color='darkmagenta', alpha=0.6, label='Config SST', marker='o', s=100)
+    plt.scatter(av_mult_array_2, hFoV_array_2, color='darkgreen', alpha=0.6, label='SST no subarrays', marker='s', s=40)
+    texts = []
+    for i, (x, y) in enumerate(zip(av_mult_array, hFoV_array)):
+        texts.append(plt.text(x, y, f"{i*2}", fontsize=12, ha="right", va="center", color='darkmagenta'))
+    
+    for i, (x, y) in enumerate(zip(av_mult_array_2, hFoV_array_2)):
+        texts.append(plt.text(x, y, f"{i*2}", fontsize=12, ha="right", va="center", color='darkgreen'))
+    
+   # adjust_text(texts, only_move={'points':'y', 'text':'y'}) # in case we want arrows: ,arrowprops=dict(arrowstyle='-', color='gray')
+    plt.ylabel("hFoV")
+    plt.xlabel("Average Multiplicity")
+    plt.title(f"Av Multiplicity vs. hFoV for different values of m_cut with SST: div: {array_1_2.div} and conv: {array.div} and full subarray: {array_2.div}")
+    plt.legend()
+    plt.grid(axis='y', alpha=0.1)
+    plt.show()
 
 def multiplicity_plot_old(array, fig=None):
    
