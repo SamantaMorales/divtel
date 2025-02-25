@@ -314,8 +314,168 @@ class Array:
 
         return hfov, m_ave
 
+    def hFoV_bar_graph(self, m_cut=0, return_multiplicity=False, subarray_mult=None, multiplicity_max=None):
+        """   
+        Return a hyper field of view (hFoV) above a given multiplicity with optional subgroup handling.
+    
+        Parameters
+        ----------
+        m_cut: float, optional
+            the minimum multiplicity
+        return_multiplicity: bool, optional
+            return average and variance of multiplicity
+        full_output: bool, optional
+            return all parameters; multiplicity, overlaps, geoms
+        Returns
+        -------
+        fov: float
+            hFoV
+        m_ave: float
+            average of multiplicity
+        m_var: float
+            variance of multiplicity
+        multiplicity: array
+            array containing multiplicity and corresponding hFoV
+        overlaps: array
+            array containing the number of overlaps for each patch
+        geoms: shapely.ops.polygonize
+            geometry of each patch
+        """
+        #Defining the following arrays
+        hFoV_list=[]
+        multiplicity_list=[]
+        # Unit conversion remains the same
+        if multiplicity_max is None:
+            multiplicity_max=14
+        if self.table.units == 'rad':
+            self.__convert_units__(toDeg=True)
+       
+        coord = self.get_pointing_coord(icrs=False)
+        nside = 512
+        map_multiplicity = np.zeros(hp.nside2npix(nside), dtype=np.float64)
+
+        # Initialize Healpix coordinates
+        counter = np.arange(0, hp.nside2npix(nside))
+        ra, dec = hp.pix2ang(nside, counter, True, lonlat=True)
+        coordinate = SkyCoord(ra=ra*u.deg, dec=dec*u.deg)
+
+        # If subarray_mult is not provided, set all multiplicities to 1
+        if subarray_mult is None:
+            subarray_mult = np.ones(len(self.telescopes))
+
+        # Iterate over telescopes
+        for i, tel in tqdm.tqdm(enumerate(self.telescopes)):
+            pointing = SkyCoord(ra=coord.az[i].degree, dec=coord.alt[i].degree, unit='deg')
+            r_fov = np.arctan((tel.camera_radius / tel.focal).to(u.dimensionless_unscaled)).to(u.deg)
+            mask = coordinate.separation(pointing) < r_fov
+
+            # Add intrinsic multiplicity for this telescope
+            map_multiplicity[mask] += subarray_mult[i]
+        for m_cut in range(multiplicity_max):
+            print(m_cut+1)
+        # Calculate the hFoV and average multiplicity
+            mask_fov = map_multiplicity == m_cut+1
+            hFoV_list.append( hp.nside2pixarea(nside, True) * np.sum(mask_fov))
+            multiplicity_list.append(np.mean(map_multiplicity[mask_fov]))
+
+        return hFoV_list, multiplicity_list
 
 
+    
+
+    def hFoV_for_2_arrays_bar_graph(self, array_2, m_cut=0, return_multiplicity=False, subarray_mult=None, subarray_mult_2=None):
+        """   
+        
+        Return a hyper field of view (hFoV) above a given multiplicity with optional subgroup handling.
+        Here the idea is to do the same thing as before, getting two arrays and using that
+        Parameters
+        ----------
+        m_cut: float, optional
+            the minimum multiplicity
+        return_multiplicity: bool, optional
+            return average and variance of multiplicity
+        full_output: bool, optional
+            return all parameters; multiplicity, overlaps, geoms
+        Returns
+        -------
+        fov: float
+            hFoV
+        m_ave: float
+            average of multiplicity
+        m_var: float
+            variance of multiplicity
+        multiplicity: array
+            array containing multiplicity and corresponding hFoV
+        overlaps: array
+            array containing the number of overlaps for each patch
+        geoms: shapely.ops.polygonize
+            geometry of each patch
+        """
+        hFoV_list=[]
+        multiplicity_list=[]
+        # Unit conversion remains the same
+        #if self.table.units == 'rad':
+        #    self.__convert_units__(toDeg=True)
+
+        #if array_2.table.units == 'rad':
+        #    array_2.__convert_units__(toDeg=True)
+
+        coord = self.get_pointing_coord(icrs=False)
+       # print(coord)
+        coord_2 = array_2.get_pointing_coord(icrs=False)
+       # print(f"the coord_2 are: {coord_2}")
+        nside = 512
+        map_multiplicity_1 = np.zeros(hp.nside2npix(nside), dtype=np.float64)
+        map_multiplicity_2= np.zeros(hp.nside2npix(nside), dtype=np.float64)
+        combination_map=np.zeros(hp.nside2npix(nside), dtype=np.float64)
+        # Initialize Healpix coordinates
+        counter = np.arange(0, hp.nside2npix(nside))
+        ra, dec = hp.pix2ang(nside, counter, True, lonlat=True)
+        coordinate = SkyCoord(ra=ra*u.deg, dec=dec*u.deg)
+
+        #Inirialize Healpix coordinates for second array, just becausae I want to make sure everything is 
+        #working
+        counter_2 = np.arange(0, hp.nside2npix(nside))
+        ra_2, dec_2 = hp.pix2ang(nside, counter_2, True, lonlat=True)
+        coordinate_2 = SkyCoord(ra=ra_2*u.deg, dec=dec_2*u.deg)
+
+        # If subarray_mult is not provided, set all multiplicities to 1
+        if subarray_mult is None:
+            subarray_mult = np.ones(len(self.telescopes))
+
+        # If subarray_mult is not provided, set all multiplicities to 1
+        if subarray_mult_2 is None:
+            subarray_mult_2 = np.ones(len(array_2.telescopes))
+
+        # Iterate over telescopes
+        for i, tel in tqdm.tqdm(enumerate(self.telescopes)):
+            pointing = SkyCoord(ra=coord.az[i].degree, dec=coord.alt[i].degree, unit='deg')
+            r_fov = np.arctan((tel.camera_radius / tel.focal).to(u.dimensionless_unscaled)).to(u.deg)
+            mask = coordinate.separation(pointing) < r_fov
+            # Add intrinsic multiplicity for this telescope
+            map_multiplicity_1[mask] += subarray_mult[i]
+
+         # Iterate over telescopes
+        for i, tel in tqdm.tqdm(enumerate(array_2.telescopes)):
+            pointing_2 = SkyCoord(ra=coord_2.az[i].degree, dec=coord_2.alt[i].degree, unit='deg')
+            r_fov_2 = np.arctan((tel.camera_radius / tel.focal).to(u.dimensionless_unscaled)).to(u.deg)
+            mask_2 = coordinate_2.separation(pointing_2) < r_fov_2
+            # Add intrinsic multiplicity for this telescope
+            map_multiplicity_2[mask_2] += subarray_mult_2[i]
+
+        
+        for m_cut in range(45):
+           # print(m_cut+1)
+        # Calculate the hFoV and average multiplicity
+            combination_map=map_multiplicity_1 + map_multiplicity_2
+            mask_fov = (map_multiplicity_1 + map_multiplicity_2) == m_cut+1
+            hFoV_list.append( hp.nside2pixarea(nside, True) * np.sum(mask_fov))
+            multiplicity_list.append(np.mean(combination_map[mask_fov]))
+
+        return hFoV_list, multiplicity_list
+
+
+    
     def hFoV_for_2_arrays(self, array_2, m_cut=0, return_multiplicity=False, subarray_mult=None, subarray_mult_2=None):
         """   
         Return a hyper field of view (hFoV) above a given multiplicity with optional subgroup handling.
@@ -377,7 +537,7 @@ class Array:
         # If subarray_mult is not provided, set all multiplicities to 1
         if subarray_mult_2 is None:
             subarray_mult_2 = np.ones(len(array_2.telescopes))
-
+        combination_map=np.zeros(hp.nside2npix(nside), dtype=np.float64)
         # Iterate over telescopes
         for i, tel in tqdm.tqdm(enumerate(self.telescopes)):
             pointing = SkyCoord(ra=coord.az[i].degree, dec=coord.alt[i].degree, unit='deg')
@@ -402,6 +562,64 @@ class Array:
 
         return hfov, m_ave
 
+
+    def combiantion_of_FoV_bar_graph( self,number_of_arrays=None, array_2=None, array_3=None, array_4=None, subarray_mult_1=None, subarray_mult_2=None, subarray_mult_3=None, subarray_mult_4=None, m_cut=0):
+        hfov=[]
+        m_ave=[]
+        array_1=self
+        if number_of_arrays is None:
+            number_of_arrays=1
+        nside = 512
+        map_multiplicities=[]
+        subarray_different_multiplicities=[]
+        different_arrays=[]
+        map_multiplicity_list = [np.zeros(hp.nside2npix(nside), dtype=np.float64) for _ in range(number_of_arrays)]
+        coord_list=[]
+        if subarray_mult_1 is None:
+                subarray_mult_1 = np.ones(len(self.telescopes))
+        if subarray_mult_2 is None:
+                subarray_mult_2 = np.ones(len(array_2.telescopes))
+        if subarray_mult_3 is None and array_3 is not None:
+                subarray_mult_3 = np.ones(len(array_3.telescopes))
+        if array_4 is not None and subarray_mult_4 is None:
+                subarray_mult_4 = np.ones(len(array_4.telescopes))
+        combination_map=np.zeros(hp.nside2npix(nside), dtype=np.float64)
+        subarray_different_multiplicities = [x for x in [subarray_mult_1, subarray_mult_2, subarray_mult_3, subarray_mult_4] if x is not None]
+        different_arrays=[array_1, array_2, array_3, array_4]
+        for number_array in range(number_of_arrays):
+          #  print(number_array)
+            coord_list.append(different_arrays[number_array].get_pointing_coord(icrs=False))
+            map_multiplicities.append(np.zeros(hp.nside2npix(nside), dtype=np.float64))
+            counter = np.arange(0, hp.nside2npix(nside))
+            ra, dec = hp.pix2ang(nside, counter, True, lonlat=True)
+            coordinate = SkyCoord(ra=ra*u.deg, dec=dec*u.deg)
+            # Iterate over telescopes
+            for i, tel in tqdm.tqdm(enumerate(different_arrays[number_array].telescopes)):
+               # print(f"The az{coord_list[number_array].az[i].degree}")
+                pointing = SkyCoord(ra=coord_list[number_array].az[i].degree, dec=coord_list[number_array].alt[i].degree, unit='deg')
+                r_fov = np.arctan((tel.camera_radius / tel.focal).to(u.dimensionless_unscaled)).to(u.deg)
+                mask = coordinate.separation(pointing) < r_fov
+               # print(subarray_different_multiplicities[number_array][i])
+                #print( map_multiplicity_list[number_array][mask])
+              #  print(f"the diff_mult{subarray_different_multiplicities[number_array][i]}")
+                map_multiplicity_list[number_array][mask] += subarray_different_multiplicities[number_array][i]
+        
+        for m_cut in range(46):     
+    # Sum all subarray maps into the combination map
+            for i in range(number_of_arrays):
+                print(m_cut)
+                
+           # print(map_multiplicities[i])
+                combination_map += map_multiplicity_list[i]
+             
+                mask_fov = combination_map == m_cut #Here I am adding both of them so now try
+                hfov.append(hp.nside2pixarea(nside, True) * np.sum(mask_fov))
+           # print(combination_map)
+           # print(mask_fov)
+                m_ave.append(np.mean(combination_map[mask_fov]))
+
+        return hfov, m_ave
+
     def combiantion_of_FoV( self,number_of_arrays=None, array_2=None, array_3=None, array_4=None, subarray_mult_1=None, subarray_mult_2=None, subarray_mult_3=None, subarray_mult_4=None, m_cut=0):
         array_1=self
         if number_of_arrays is None:
@@ -416,7 +634,7 @@ class Array:
                 subarray_mult_1 = np.ones(len(self.telescopes))
         if subarray_mult_2 is None:
                 subarray_mult_2 = np.ones(len(array_2.telescopes))
-        if subarray_mult_3 is None:
+        if subarray_mult_3 is None and array_3 is not None:
                 subarray_mult_3 = np.ones(len(array_3.telescopes))
         if array_4 is not None and subarray_mult_4 is None:
                 subarray_mult_4 = np.ones(len(array_4.telescopes))

@@ -464,6 +464,7 @@ def table_multiplicity(array, subarray_mult=None, maximum_multiplicity=None, ste
         maximum_multiplicity=13#Actually I could caluclate this
     if step is None:
         step=1
+        
     hFoV_array=[]
     multiplicities = list(range(1, maximum_multiplicity+1))
     for i in range(maximum_multiplicity):
@@ -644,6 +645,8 @@ def combination_bar_graph_av_mult_SST(array, array_1_2, array_2, subarray_mult=N
     plt.legend()
     plt.grid(axis='y', alpha=0.1)
     plt.show()
+
+
 
 def multiplicity_plot_old(array, fig=None):
    
