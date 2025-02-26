@@ -72,6 +72,9 @@ def pointG_position(barycenter, div, alt_mean, az_mean):
         [Gx, Gy, Gz]
     """
     norm = _norm_div(div)
+    print(f"The barycenter {barycenter[0]}")
+    print(f"The barycenter {barycenter[1]}")
+    print(f"The barycenter {barycenter[2]}")
     Gx = barycenter[0] - norm * np.cos(alt_mean) * np.cos(az_mean)
     Gy = barycenter[1] + norm * np.cos(alt_mean) * np.sin(az_mean)
     Gz = barycenter[2] - norm * np.sin(alt_mean)

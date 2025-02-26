@@ -621,12 +621,15 @@ def combination_bar_graph_av_mult_SST(array, array_1_2, array_2, subarray_mult=N
     av_mult_array=[]
     av_mult_array_2=[]
     hFoV_array_2=[]
-    for i in range(23):
-        print(i*2)
-        av_mult_array.append(array.hFoV_for_2_arrays(array_2=array_1_2, subarray_mult=subarray_mult, subarray_mult_2=subarray_mult_1_2, m_cut=i*2)[1])
-        av_mult_array_2.append(array_2.hFoV(m_cut=i*2)[1])
-        hFoV_array.append(array.hFoV_for_2_arrays(array_2=array_1_2, subarray_mult=subarray_mult, subarray_mult_2=subarray_mult_1_2, m_cut=i*2)[0])
-        hFoV_array_2.append(array_2.hFoV(m_cut=i*2)[0])
+    for i in range(45):
+        print(i)
+        av_mult_array.append(array.combiantion_of_FoV_bar_graph(number_of_arrays=2, array_2=array_1_2, array_3=None, array_4=None, subarray_mult_1=subarray_mult, subarray_mult_2=subarray_mult_1_2, subarray_mult_3=None, subarray_mult_4=None, m_cut=(i)[1]))
+        print(av_mult_array)
+        av_mult_array_2.append(array_2.hFoV_bar_graph(m_cut=(i))[1])
+        print(av_mult_array_2)
+        hFoV_array.append(array.combiantion_of_FoV_bar_graph(number_of_arrays=2, array_2=array_1_2, array_3=None, array_4=None, subarray_mult_1=subarray_mult, subarray_mult_2=subarray_mult_1_2, subarray_mult_3=None, subarray_mult_4=None, m_cut=(i))[0])
+        print(hFoV_array)
+        hFoV_array_2.append(array_2.hFoV(m_cut=(i))[0])
        # print(hFoV_array)
     plt.figure(figsize=(8, 6)) 
     plt.scatter(av_mult_array, hFoV_array, color='darkmagenta', alpha=0.6, label='Config SST', marker='o', s=100)

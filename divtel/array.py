@@ -37,13 +37,13 @@ class Array:
         args for class.CTA_Info
     """
 
-    def __init__(self, telescope_list, frame=None, pointing2src=False, **kwargs):
+    def __init__(self, telescope_list, complete_array=None, frame=None, pointing2src=False, **kwargs):
         
         self.telescopes = telescope_list
-
+        
         self._div = 0
         self._pointing = {"az":0*u.deg, "alt":0*u.deg, "ra": 0*u.deg, "dec": 0*u.deg}
-
+        
         if frame == None:
             self._frame = CTA_Info(verbose=False, **kwargs)
         else:
@@ -52,9 +52,9 @@ class Array:
                 self.set_pointing_coord(ra = self.frame.source.icrs.ra.deg, 
                                         dec = self.frame.source.icrs.dec.deg)
 
-        self.__make_table__()
+        self.__make_table__(complete_array=complete_array)
 
-    def __make_table__(self):
+    def __make_table__(self, complete_array=None):
 
         """
         Merge rows from Telescope.table
@@ -77,7 +77,7 @@ class Array:
         
         self._table = tab.vstack(table)
 
-        self._table.add_column(self._dist2tel(), name="d_tel")
+        self._table.add_column(self._dist2tel(complete_array=complete_array), name="d_tel")
         self._table["d_tel"].unit = u.m
         self._table["d_tel"].info.format = "{:.2f}"
 
@@ -98,7 +98,7 @@ class Array:
         else:
             self._table.units = 'rad'
 
-    def _dist2tel(self):
+    def _dist2tel(self, complete_array=None):
         """
         Distance to the telescope from the barycenter
     
@@ -109,7 +109,10 @@ class Array:
 
         dist = np.zeros(self.size_of_array)
         for i, axis in enumerate(["x", "y", "z"]):
-            dist += (self.table[axis] - self.barycenter[i])**2.
+            if complete_array is None:
+                dist += (self.table[axis] - self.barycenter[i])**2.
+            else:
+                dist += (self.table[axis] - complete_array.barycenter[i])**2.
         dist = np.sqrt(dist)
         return dist
 
@@ -162,9 +165,9 @@ class Array:
         -------
         array
             [b_x, b_y, b_z]
+            
         """
         return np.array(utils.calc_mean(self.table, ["x", "y", "z"]))
-
     @property
     def div(self):
         """
@@ -563,9 +566,7 @@ class Array:
         return hfov, m_ave
 
 
-    def combiantion_of_FoV_bar_graph( self,number_of_arrays=None, array_2=None, array_3=None, array_4=None, subarray_mult_1=None, subarray_mult_2=None, subarray_mult_3=None, subarray_mult_4=None, m_cut=0):
-        hfov=[]
-        m_ave=[]
+    def combiantion_of_FoV_bar_graph(self,number_of_arrays=None, array_2=None, array_3=None, array_4=None, subarray_mult_1=None, subarray_mult_2=None, subarray_mult_3=None, subarray_mult_4=None, m_cut=0):
         array_1=self
         if number_of_arrays is None:
             number_of_arrays=1
@@ -602,23 +603,20 @@ class Array:
                # print(subarray_different_multiplicities[number_array][i])
                 #print( map_multiplicity_list[number_array][mask])
               #  print(f"the diff_mult{subarray_different_multiplicities[number_array][i]}")
-                map_multiplicity_list[number_array][mask] += subarray_different_multiplicities[number_array][i]
-        
-        for m_cut in range(46):     
+                map_multiplicity_list[number_array][mask] += subarray_different_multiplicities[number_array][i]        
     # Sum all subarray maps into the combination map
-            for i in range(number_of_arrays):
-                print(m_cut)
-                
+        for i in range(number_of_arrays):
            # print(map_multiplicities[i])
-                combination_map += map_multiplicity_list[i]
-             
-                mask_fov = combination_map == m_cut #Here I am adding both of them so now try
-                hfov.append(hp.nside2pixarea(nside, True) * np.sum(mask_fov))
+            combination_map += map_multiplicity_list[i]
+            mask_fov = combination_map ==m_cut+1#Here I am adding both of them so now try
+            hfov = hp.nside2pixarea(nside, True) * np.sum(mask_fov)
            # print(combination_map)
            # print(mask_fov)
-                m_ave.append(np.mean(combination_map[mask_fov]))
-
+            m_ave = np.mean(combination_map[mask_fov])
+            print(m_ave)
+            print(hfov)
         return hfov, m_ave
+
 
     def combiantion_of_FoV( self,number_of_arrays=None, array_2=None, array_3=None, array_4=None, subarray_mult_1=None, subarray_mult_2=None, subarray_mult_3=None, subarray_mult_4=None, m_cut=0):
         array_1=self
@@ -654,12 +652,7 @@ class Array:
                 pointing = SkyCoord(ra=coord_list[number_array].az[i].degree, dec=coord_list[number_array].alt[i].degree, unit='deg')
                 r_fov = np.arctan((tel.camera_radius / tel.focal).to(u.dimensionless_unscaled)).to(u.deg)
                 mask = coordinate.separation(pointing) < r_fov
-               # print(subarray_different_multiplicities[number_array][i])
-                #print( map_multiplicity_list[number_array][mask])
-              #  print(f"the diff_mult{subarray_different_multiplicities[number_array][i]}")
                 map_multiplicity_list[number_array][mask] += subarray_different_multiplicities[number_array][i]
-        
-        
     # Sum all subarray maps into the combination map
         for i in range(number_of_arrays):
            # print(map_multiplicities[i])
@@ -748,7 +741,7 @@ class Array:
 
         self.__make_table__()
         
-    def divergent_pointing(self, div, ra=None, dec = None, alt=None, az=None, units="deg"):
+    def divergent_pointing(self,  div, complete_array=None, ra=None, dec = None, alt=None, az=None, units="deg"):
         """
         Divergent pointing given a parameter div.
         Update pointing of all telescopes of the array.
@@ -767,26 +760,37 @@ class Array:
         units: string, optional
             either 'deg' (default) or 'rad'
         """
-
+        
         self.set_pointing_coord(ra=ra, dec = dec, alt=alt, az=az, units=units) #repointing
         self._div = div
         
         if np.abs(div) > 1: #or div < 0:
             print("[Error] The div abs value should be lower and 1.")
         elif div!=0:
-            G = pointing.pointG_position(self.barycenter, self.div, self.pointing["alt"], self.pointing["az"])
+            if complete_array is None:
+                G = pointing.pointG_position(self.barycenter, self.div, self.pointing["alt"], self.pointing["az"])
+               # print(G[0])
+               # print(G[1])
+               # print(G[2])
+            else:
+                G = pointing.pointG_position(complete_array.barycenter, self.div, self.pointing["alt"], self.pointing["az"])
+            
             for tel in self.telescopes:
                 alt_tel, az_tel = pointing.tel_div_pointing(tel.position, G)
+                print(alt_tel)
+                print(az_tel)
                 
                 if div < 0:
                     az_tel=az_tel - np.pi 
                     radians= az_tel * u.rad
-                    print(radians)
+                   # print(radians)
                 	
                 tel.__point_to_altaz__(alt_tel*u.rad, az_tel*u.rad)
+                print(f"alt {alt_tel*u.rad}")
+                print(f"az {az_tel*u.rad}")
                 
-        
-            self.__make_table__()
+                
+            self.__make_table__(complete_array)
 
 
     def divergent_pointing_2_div(self, tel_group_2, complete_array, div1, div2, ra=None, dec = None, alt=None, az=None, units="deg"):
@@ -854,10 +858,11 @@ class Array:
                     #print(f"divergence negative(convergence) and the azimuth of telescope 2 is actually is{az_tel_2}")
                 tel_2.__point_to_altaz__(alt_tel_2*u.rad, az_tel_2*u.rad)
                 
-                
+                print(alt_tel_2*u.rad)
+                print(az_tel_2*u.rad)
 
-            self.__make_table__()
-            tel_group_2.__make_table__()
+            self.__make_table__(complete_array=complete_array)
+            tel_group_2.__make_table__(complete_array=complete_array)
                   
     
     
