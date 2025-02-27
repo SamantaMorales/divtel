@@ -349,7 +349,7 @@ class Array:
         multiplicity_list=[]
         # Unit conversion remains the same
         if multiplicity_max is None:
-            multiplicity_max=14
+            multiplicity_max=45
         if self.table.units == 'rad':
             self.__convert_units__(toDeg=True)
        
@@ -587,8 +587,9 @@ class Array:
         combination_map=np.zeros(hp.nside2npix(nside), dtype=np.float64)
         subarray_different_multiplicities = [x for x in [subarray_mult_1, subarray_mult_2, subarray_mult_3, subarray_mult_4] if x is not None]
         different_arrays=[array_1, array_2, array_3, array_4]
-        for number_array in range(number_of_arrays):
-          #  print(number_array)
+        for number_array in range(number_of_arrays-1):
+            print(f"The number of array{number_array}")
+            print(range(number_of_arrays-1))
             coord_list.append(different_arrays[number_array].get_pointing_coord(icrs=False))
             map_multiplicities.append(np.zeros(hp.nside2npix(nside), dtype=np.float64))
             counter = np.arange(0, hp.nside2npix(nside))
@@ -596,19 +597,23 @@ class Array:
             coordinate = SkyCoord(ra=ra*u.deg, dec=dec*u.deg)
             # Iterate over telescopes
             for i, tel in tqdm.tqdm(enumerate(different_arrays[number_array].telescopes)):
+              
                # print(f"The az{coord_list[number_array].az[i].degree}")
                 pointing = SkyCoord(ra=coord_list[number_array].az[i].degree, dec=coord_list[number_array].alt[i].degree, unit='deg')
                 r_fov = np.arctan((tel.camera_radius / tel.focal).to(u.dimensionless_unscaled)).to(u.deg)
                 mask = coordinate.separation(pointing) < r_fov
                # print(subarray_different_multiplicities[number_array][i])
+                print("map_multiplicity_list type:", type(map_multiplicity_list))
                 #print( map_multiplicity_list[number_array][mask])
               #  print(f"the diff_mult{subarray_different_multiplicities[number_array][i]}")
+                print(f"the number of array:{number_array}")
+                print(f"the telescope{i}")
                 map_multiplicity_list[number_array][mask] += subarray_different_multiplicities[number_array][i]        
     # Sum all subarray maps into the combination map
         for i in range(number_of_arrays):
            # print(map_multiplicities[i])
             combination_map += map_multiplicity_list[i]
-            mask_fov = combination_map ==m_cut+1#Here I am adding both of them so now try
+            mask_fov = combination_map ==m_cut+1 #Here I am adding both of them so now try
             hfov = hp.nside2pixarea(nside, True) * np.sum(mask_fov)
            # print(combination_map)
            # print(mask_fov)
@@ -616,8 +621,6 @@ class Array:
             print(m_ave)
             print(hfov)
         return hfov, m_ave
-
-
     def combiantion_of_FoV( self,number_of_arrays=None, array_2=None, array_3=None, array_4=None, subarray_mult_1=None, subarray_mult_2=None, subarray_mult_3=None, subarray_mult_4=None, m_cut=0):
         array_1=self
         if number_of_arrays is None:
@@ -657,7 +660,7 @@ class Array:
         for i in range(number_of_arrays):
            # print(map_multiplicities[i])
             combination_map += map_multiplicity_list[i]
-            mask_fov = combination_map > m_cut #Here I am adding both of them so now try
+            mask_fov = combination_map > m_cut  #Here I am adding both of them so now try Remember to rechange it to > !!!!!! this is just to see if everything is working the == and remember to put mcut +1 to m_cut when you have the >
             hfov = hp.nside2pixarea(nside, True) * np.sum(mask_fov)
            # print(combination_map)
            # print(mask_fov)
@@ -665,7 +668,56 @@ class Array:
 
         return hfov, m_ave
 
-            
+    def combiantion_of_FoV_with_m_cut_equal_to( self,number_of_arrays=None, array_2=None, array_3=None, array_4=None, subarray_mult_1=None, subarray_mult_2=None, subarray_mult_3=None, subarray_mult_4=None, m_cut=0):
+        array_1=self
+        if number_of_arrays is None:
+            number_of_arrays=1
+        nside = 512
+        map_multiplicities=[]
+        subarray_different_multiplicities=[]
+        different_arrays=[]
+        map_multiplicity_list = [np.zeros(hp.nside2npix(nside), dtype=np.float64) for _ in range(number_of_arrays)]
+        coord_list=[]
+        if subarray_mult_1 is None:
+                subarray_mult_1 = np.ones(len(self.telescopes))
+        if subarray_mult_2 is None:
+                subarray_mult_2 = np.ones(len(array_2.telescopes))
+        if subarray_mult_3 is None and array_3 is not None:
+                subarray_mult_3 = np.ones(len(array_3.telescopes))
+        if array_4 is not None and subarray_mult_4 is None:
+                subarray_mult_4 = np.ones(len(array_4.telescopes))
+        combination_map=np.zeros(hp.nside2npix(nside), dtype=np.float64)
+        subarray_different_multiplicities = [x for x in [subarray_mult_1, subarray_mult_2, subarray_mult_3, subarray_mult_4] if x is not None]
+        different_arrays=[array_1, array_2, array_3, array_4]
+        for number_array in range(number_of_arrays):
+          #  print(number_array)
+            coord_list.append(different_arrays[number_array].get_pointing_coord(icrs=False))
+            map_multiplicities.append(np.zeros(hp.nside2npix(nside), dtype=np.float64))
+            counter = np.arange(0, hp.nside2npix(nside))
+            ra, dec = hp.pix2ang(nside, counter, True, lonlat=True)
+            coordinate = SkyCoord(ra=ra*u.deg, dec=dec*u.deg)
+            # Iterate over telescopes
+            for i, tel in tqdm.tqdm(enumerate(different_arrays[number_array].telescopes)):
+               # print(f"The az{coord_list[number_array].az[i].degree}")
+                pointing = SkyCoord(ra=coord_list[number_array].az[i].degree, dec=coord_list[number_array].alt[i].degree, unit='deg')
+                r_fov = np.arctan((tel.camera_radius / tel.focal).to(u.dimensionless_unscaled)).to(u.deg)
+                mask = coordinate.separation(pointing) < r_fov
+                map_multiplicity_list[number_array][mask] += subarray_different_multiplicities[number_array][i]
+    # Sum all subarray maps into the combination map
+        for i in range(number_of_arrays):
+           # print(map_multiplicities[i])
+            combination_map += map_multiplicity_list[i]
+            mask_fov = combination_map == m_cut +1 #Here I am adding both of them so now try Remember to rechange it to > !!!!!! this is just to see if everything is working the == and remember to put mcut +1 to m_cut when you have the >
+            hfov = hp.nside2pixarea(nside, True) * np.sum(mask_fov)
+           # print(combination_map)
+           # print(mask_fov)
+            m_ave = np.mean(combination_map[mask_fov])
+
+        return hfov, m_ave
+
+    def bar_graph_SST(self, array_2, subarray_mult=None,subarray_mult_2=None, maximum_multiplicity=None,fig=None):
+
+        return visual.bar_graph_SST(self, array_2, subarray_mult, subarray_mult_2, fig=fig)
 
     def update_frame(self, site=None, time=None, delta_t=None, verbose=False):
         """
@@ -741,7 +793,7 @@ class Array:
 
         self.__make_table__()
         
-    def divergent_pointing(self,  div, complete_array=None, ra=None, dec = None, alt=None, az=None, units="deg"):
+    def divergent_pointing(self, div, complete_array=None,  ra=None, dec = None, alt=None, az=None, units="deg"):
         """
         Divergent pointing given a parameter div.
         Update pointing of all telescopes of the array.
@@ -761,36 +813,39 @@ class Array:
             either 'deg' (default) or 'rad'
         """
         
-        self.set_pointing_coord(ra=ra, dec = dec, alt=alt, az=az, units=units) #repointing
+        self.set_pointing_coord(ra=ra, dec = dec, alt=alt, az=az, units=units)
+        
         self._div = div
+
+        
         
         if np.abs(div) > 1: #or div < 0:
             print("[Error] The div abs value should be lower and 1.")
-        elif div!=0:
+           
+        elif div != 0:
+            #TO put the same barycenter maybe I could just change here instead of self.barycenter put the barycenter of the full_array, ask confirmation. Now at this point I should change the display as well
             if complete_array is None:
                 G = pointing.pointG_position(self.barycenter, self.div, self.pointing["alt"], self.pointing["az"])
-               # print(G[0])
-               # print(G[1])
-               # print(G[2])
+
             else:
                 G = pointing.pointG_position(complete_array.barycenter, self.div, self.pointing["alt"], self.pointing["az"])
             
             for tel in self.telescopes:
-                alt_tel, az_tel = pointing.tel_div_pointing(tel.position, G)
-                print(alt_tel)
-                print(az_tel)
-                
+                alt_tel, az_tel= pointing.tel_div_pointing(tel.position, G)
+               # print(f"the azimuth of tel 1 is{az_tel_1}")
                 if div < 0:
                     az_tel=az_tel - np.pi 
-                    radians= az_tel * u.rad
-                   # print(radians)
-                	
+                 #   print(f"It was negative and the az_tel_1 is: {az_tel_1}")
                 tel.__point_to_altaz__(alt_tel*u.rad, az_tel*u.rad)
-                print(f"alt {alt_tel*u.rad}")
-                print(f"az {az_tel*u.rad}")
+                #print(f"The azimuth is {tel_1.__point_to_altaz__(alt_tel_1*u.rad, az_tel_1*u.rad)}")
+           
+                
+                #print(f"the azimuth of tel_2 is{az_tel_2}")
                 
                 
-            self.__make_table__(complete_array)
+
+            self.__make_table__(complete_array=complete_array)
+            
 
 
     def divergent_pointing_2_div(self, tel_group_2, complete_array, div1, div2, ra=None, dec = None, alt=None, az=None, units="deg"):

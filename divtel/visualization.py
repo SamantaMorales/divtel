@@ -580,11 +580,11 @@ def combination_bar_graph_av_mult_MST_and_SST(array, array_2, array_3, subarray_
    
     av_mult_array=[]
    
-    for i in range(20):
-        print(i*3)
-        av_mult_array.append(array.combiantion_of_FoV(number_of_arrays=3, array_2=array_2, array_3=array_3, subarray_mult_1=subarray_mult, subarray_mult_2=subarray_mult_2, subarray_mult_3=subarray_mult_3,m_cut=i*3 )[1])
-        print(array.combiantion_of_FoV(number_of_arrays=3, array_2=array_2, array_3=array_3, subarray_mult_1=subarray_mult, subarray_mult_2=subarray_mult_2, subarray_mult_3=subarray_mult_3, m_cut=i*3))
-        hFoV_array.append(array.combiantion_of_FoV(number_of_arrays=3, array_2=array_2, array_3=array_3, subarray_mult_1=subarray_mult, subarray_mult_2=subarray_mult_2, subarray_mult_3=subarray_mult_3, m_cut=i*3)[0])
+    for i in range(59):
+        print(i)
+        av_mult_array.append(array.combiantion_of_FoV(number_of_arrays=3, array_2=array_2, array_3=array_3, subarray_mult_1=subarray_mult, subarray_mult_2=subarray_mult_2, subarray_mult_3=subarray_mult_3,m_cut=i )[1])
+        print(array.combiantion_of_FoV(number_of_arrays=3, array_2=array_2, array_3=array_3, subarray_mult_1=subarray_mult, subarray_mult_2=subarray_mult_2, subarray_mult_3=subarray_mult_3, m_cut=i))
+        hFoV_array.append(array.combiantion_of_FoV(number_of_arrays=3, array_2=array_2, array_3=array_3, subarray_mult_1=subarray_mult, subarray_mult_2=subarray_mult_2, subarray_mult_3=subarray_mult_3, m_cut=i)[0])
        
        # print(hFoV_array)
     plt.figure(figsize=(8, 6)) 
@@ -592,7 +592,7 @@ def combination_bar_graph_av_mult_MST_and_SST(array, array_2, array_3, subarray_
    
     texts = []
     for i, (x, y) in enumerate(zip(av_mult_array, hFoV_array)):
-        texts.append(plt.text(x, y, f"{i*3}", fontsize=12, ha="right", va="center", color='darkgreen'))
+        texts.append(plt.text(x, y, f"{i}", fontsize=12, ha="right", va="center", color='darkgreen'))
     
    
     
@@ -606,6 +606,45 @@ def combination_bar_graph_av_mult_MST_and_SST(array, array_2, array_3, subarray_
     
 #Put the i = j in case both of them are the same and just put the same that are different for array of combination of FoV
 
+def bar_graph_SST(array, array_2, subarray_mult=None,subarray_mult_2=None, maximum_multiplicity=None,fig=None):
+    if array.table.units == 'rad':
+        array.__convert_units__(toDeg=True)
+    if array_2.table.units == 'rad':
+        array_2.__convert_units__(toDeg=True)
+   
+    if maximum_multiplicity is None:
+        maximum_multiplicity=60#Actually I could caluclate this
+   
+    hFoV_array=[]
+   
+    av_mult_array=[]
+   
+    for i in range(45):
+        print(i)
+        av_mult_array.append(array.combiantion_of_FoV(number_of_arrays=2, array_2=array_2, subarray_mult_1=subarray_mult, subarray_mult_2=subarray_mult_2, m_cut=i )[1]) #here I put i because the combination of FoV will do there the i+1 maybe it would be better to change it here we will see.
+        print(array.combiantion_of_FoV(number_of_arrays=2, array_2=array_2,subarray_mult_1=subarray_mult, subarray_mult_2=subarray_mult_2, m_cut=i))
+        
+        hFoV_array.append(array.combiantion_of_FoV(number_of_arrays=2, array_2=array_2, subarray_mult_1=subarray_mult, subarray_mult_2=subarray_mult_2, m_cut=i)[0]) #here I put i because the combination of FoV will do there the i+1 maybe it would be better to change it here we will see.
+       
+       # print(hFoV_array)
+    plt.figure(figsize=(8, 6)) 
+    plt.scatter(av_mult_array, hFoV_array, color='limegreen', alpha=0.6, label='Combination MST and SST', marker='o', s=100)
+   
+    texts = []
+    for i, (x, y) in enumerate(zip(av_mult_array, hFoV_array)):
+        texts.append(plt.text(x, y, f"{i}", fontsize=12, ha="right", va="center", color='darkgreen'))
+    
+   
+    
+   # adjust_text(texts, only_move={'points':'y', 'text':'y'}) # in case we want arrows: ,arrowprops=dict(arrowstyle='-', color='gray')
+    plt.ylabel("hFoV")
+    plt.xlabel("Average Multiplicity")
+    plt.title(f"Av Multiplicity vs. hFoV for different values of m_cut with conv : {array.div} div: {array_2.div} and MST div:{array_3.div}")
+    plt.legend()
+    plt.grid(axis='y', alpha=0.1)
+    plt.show()
+    
+#Put the i = j in case both of them are the same and just put the same that are different for array of combination of FoV
 def combination_bar_graph_av_mult_SST(array, array_1_2, array_2, subarray_mult=None, subarray_mult_1_2=None, subarray_mult_2=None, maximum_multiplicity=None, step=None, fig=None):
     #array combination of SST: array and array_1_2
     #array_2  configuration of full no SST subarray
@@ -621,26 +660,29 @@ def combination_bar_graph_av_mult_SST(array, array_1_2, array_2, subarray_mult=N
     av_mult_array=[]
     av_mult_array_2=[]
     hFoV_array_2=[]
-    for i in range(45):
-        print(i)
-        av_mult_array.append(array.combiantion_of_FoV_bar_graph(number_of_arrays=2, array_2=array_1_2, array_3=None, array_4=None, subarray_mult_1=subarray_mult, subarray_mult_2=subarray_mult_1_2, subarray_mult_3=None, subarray_mult_4=None, m_cut=(i)[1]))
+    mult = np.linspace(1, 45, num=45)
+    for i in mult:
+        #print(3*i+1)
+        av_mult_array.append(array.combiantion_of_FoV_bar_graph(number_of_arrays=2, array_2=array_1_2, subarray_mult_1=subarray_mult, subarray_mult_2=subarray_mult_1_2, m_cut=i)[1])
         print(av_mult_array)
-        av_mult_array_2.append(array_2.hFoV_bar_graph(m_cut=(i))[1])
+        av_mult_array_2.append(array_2.hFoV_bar_graph(m_cut=i)[1])
         print(av_mult_array_2)
-        hFoV_array.append(array.combiantion_of_FoV_bar_graph(number_of_arrays=2, array_2=array_1_2, array_3=None, array_4=None, subarray_mult_1=subarray_mult, subarray_mult_2=subarray_mult_1_2, subarray_mult_3=None, subarray_mult_4=None, m_cut=(i))[0])
+        hFoV_array.append(array.combiantion_of_FoV_bar_graph(number_of_arrays=2, array_2=array_1_2,  subarray_mult_1=subarray_mult, subarray_mult_2=subarray_mult_1_2, m_cut=i)[0])
         print(hFoV_array)
-        hFoV_array_2.append(array_2.hFoV(m_cut=(i))[0])
+        hFoV_array_2.append(array_2.hFoV_bar_graph(m_cut=(i))[0])
        # print(hFoV_array)
+    print(hFoV_array)
+    print(hFoV_array_2)
     plt.figure(figsize=(8, 6)) 
-    plt.scatter(av_mult_array, hFoV_array, color='darkmagenta', alpha=0.6, label='Config SST', marker='o', s=100)
-    plt.scatter(av_mult_array_2, hFoV_array_2, color='darkgreen', alpha=0.6, label='SST no subarrays', marker='s', s=40)
+    plt.scatter(mult, hFoV_array, color='darkmagenta', alpha=0.6, label='Config SST', marker='o', s=100)
+    #plt.scatter(mult, hFoV_array_2, color='darkgreen', alpha=0.6, label='SST no subarrays', marker='s', s=40)
     texts = []
-    for i, (x, y) in enumerate(zip(av_mult_array, hFoV_array)):
-        texts.append(plt.text(x, y, f"{i*2}", fontsize=12, ha="right", va="center", color='darkmagenta'))
+    #for i, (x, y) in enumerate(zip(av_mult_array, hFoV_array)):
+     #   texts.append(plt.text(x, y, f"{i}", fontsize=12, ha="right", va="center", color='darkmagenta'))
     
-    for i, (x, y) in enumerate(zip(av_mult_array_2, hFoV_array_2)):
-        texts.append(plt.text(x, y, f"{i*2}", fontsize=12, ha="right", va="center", color='darkgreen'))
-    
+    #for i, (x, y) in enumerate(zip(av_mult_array_2, hFoV_array_2)):
+    #    texts.append(plt.text(x, y, f"{i}", fontsize=12, ha="right", va="center", color='darkgreen'))
+
    # adjust_text(texts, only_move={'points':'y', 'text':'y'}) # in case we want arrows: ,arrowprops=dict(arrowstyle='-', color='gray')
     plt.ylabel("hFoV")
     plt.xlabel("Average Multiplicity")
