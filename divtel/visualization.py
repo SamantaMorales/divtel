@@ -263,11 +263,19 @@ def multiplicity_plot_2_div(array, array_2, subarray_mult_1=None, subarray_mult_
     hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
     #print("The second map is")
     #The secod multiplicity plot 
+    plt.annotate('Azimuth (degrees)', xy=(0.5, -0.05), xycoords='axes fraction', ha='center', va='center')
+    plt.annotate('Altitude (degrees)', 
+                     xy=(-0.05, 0.5), xycoords='axes fraction', 
+                     ha='center', va='center', rotation='vertical')
     hp.cartview(map_multiplicity_2, rot=[array_2.pointing["az"].value,
                                                       array_2.pointing["alt"].value],
                          lonra=[-R2, R2], latra=[-R2, R2], cmap='viridis', nest=True,
                              return_projected_map=True, title=f"Map multiplicity 2 {array_2.div}")
     hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
+    plt.annotate('Azimuth (degrees)', xy=(0.5, -0.05), xycoords='axes fraction', ha='center', va='center')
+    plt.annotate('Altitude (degrees)', 
+                     xy=(-0.05, 0.5), xycoords='axes fraction', 
+                     ha='center', va='center', rotation='vertical')
     #The combination of both of them 
     hp.cartview(
         map_multiplicity_1+map_multiplicity_2,rot=[array.pointing["az"].value,
@@ -275,6 +283,10 @@ def multiplicity_plot_2_div(array, array_2, subarray_mult_1=None, subarray_mult_
                              lonra=[-R, R], latra=[-R, R],  cmap='viridis', nest=True,
                              return_projected_map=True, title=f"MapCombination1and2{array.div}and{array_2.div}")
     hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
+    plt.annotate('Azimuth (degrees)', xy=(0.5, -0.05), xycoords='axes fraction', ha='center', va='center')
+    plt.annotate('Altitude (degrees)', 
+                     xy=(-0.05, 0.5), xycoords='axes fraction', 
+                     ha='center', va='center', rotation='vertical')
     plt.show()
     
 def multiplicity_plot_3_config(array, array_2, array_3, subarray_mult_1=None, subarray_mult_2=None, subarray_mult_3=None, fig1=None, fig2=None, fig3=None):
@@ -383,17 +395,29 @@ def multiplicity_plot_3_config(array, array_2, array_3, subarray_mult_1=None, su
     hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
     #print("The second map is")
     #The secod multiplicity plot 
+    plt.annotate('Azimuth (degrees)', xy=(0.5, -0.05), xycoords='axes fraction', ha='center', va='center')
+    plt.annotate('Altitude (degrees)', 
+                     xy=(-0.05, 0.5), xycoords='axes fraction', 
+                     ha='center', va='center', rotation='vertical')
     hp.cartview(map_multiplicity_2, rot=[array_2.pointing["az"].value,
                                                       array_2.pointing["alt"].value],
                          lonra=[-R2, R2], latra=[-R2, R2], cmap='viridis', nest=True,
                              return_projected_map=True, title=f"Map multiplicity 2 {array_2.div}")
     hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
+    plt.annotate('Azimuth (degrees)', xy=(0.5, -0.05), xycoords='axes fraction', ha='center', va='center')
+    plt.annotate('Altitude (degrees)', 
+                     xy=(-0.05, 0.5), xycoords='axes fraction', 
+                     ha='center', va='center', rotation='vertical')
 
     hp.cartview(map_multiplicity_3, rot=[array_3.pointing["az"].value,
                                                       array_3.pointing["alt"].value],
                          lonra=[-R3, R3], latra=[-R3, R3], cmap='viridis', nest=True,
                              return_projected_map=True, title=f"Map multiplicity 3 {array_3.div}")
     hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
+    plt.annotate('Azimuth (degrees)', xy=(0.5, -0.05), xycoords='axes fraction', ha='center', va='center')
+    plt.annotate('Altitude (degrees)', 
+                     xy=(-0.05, 0.5), xycoords='axes fraction', 
+                     ha='center', va='center', rotation='vertical')
     #The combination of both of them 
     hp.cartview(
         map_multiplicity_1+map_multiplicity_2+map_multiplicity_3,rot=[array.pointing["az"].value,
@@ -401,6 +425,11 @@ def multiplicity_plot_3_config(array, array_2, array_3, subarray_mult_1=None, su
                              lonra=[-R, R], latra=[-R, R],  cmap='viridis', nest=True,
                              return_projected_map=True, title=f"MapCombination 2 divergences SST: {array.div}and{array_2.div} MST: {array_3.div}")
     hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
+    plt.annotate('Azimuth (degrees)', xy=(0.5, -0.05), xycoords='axes fraction', ha='center', va='center')
+    plt.annotate('Altitude (degrees)', 
+                     xy=(-0.05, 0.5), xycoords='axes fraction', 
+                     ha='center', va='center', rotation='vertical')
+    
     plt.show()
 def multiplicity_plot(array, subarray_mult=None, fig=None):
         if array.table.units == 'rad':
@@ -432,11 +461,12 @@ def multiplicity_plot(array, subarray_mult=None, fig=None):
         hp.cartview(map_multiplicity, rot=[array.pointing["az"].value, array.pointing["alt"].value],
                 lonra=[-R,R], latra=[-R,R], nest=True, cmap='viridis', title=f"{array.frame.site} div={array.div}")
         # Annotate with axis labels:
-        plt.annotate('Right Ascension (degrees)', xy=(0.5, -0.05), xycoords='axes fraction', ha='center', va='center')
-        plt.annotate('Declination (degrees)', 
+        plt.annotate('Azimuth (degrees)', xy=(0.5, -0.05), xycoords='axes fraction', ha='center', va='center')
+        plt.annotate('Altitude (degrees)', 
                      xy=(-0.05, 0.5), xycoords='axes fraction', 
                      ha='center', va='center', rotation='vertical')
         hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
+       
 
         plt.show()
 
