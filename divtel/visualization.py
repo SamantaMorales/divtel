@@ -431,6 +431,7 @@ def multiplicity_plot_3_config(array, array_2, array_3, subarray_mult_1=None, su
                      ha='center', va='center', rotation='vertical')
     
     plt.show()
+    
 def multiplicity_plot(array, subarray_mult=None, fig=None):
         if array.table.units == 'rad':
             array.__convert_units__(toDeg=True)
@@ -457,7 +458,7 @@ def multiplicity_plot(array, subarray_mult=None, fig=None):
             # Add intrinsic multiplicity for this telescope
             map_multiplicity[mask] += subarray_mult[i]
         
-        R=np.sqrt(array.hFoV()[0]/np.pi) + 5
+        R=np.sqrt(array.hFoV(m_cut=1)[0]/np.pi) + 5
         hp.cartview(map_multiplicity, rot=[array.pointing["az"].value, array.pointing["alt"].value],
                 lonra=[-R,R], latra=[-R,R], nest=True, cmap='viridis', title=f"{array.frame.site} div={array.div}")
         # Annotate with axis labels:
@@ -470,7 +471,75 @@ def multiplicity_plot(array, subarray_mult=None, fig=None):
 
         plt.show()
 
+def multiplicity_plot_and_ring(array, subarray_mult=None, fig=None):
+        if array.table.units == 'rad':
+            array.__convert_units__(toDeg=True)
 
+        coord = array.get_pointing_coord(icrs=False)
+        nside = 512
+        map_multiplicity = np.zeros(hp.nside2npix(nside), dtype=np.float64)
+
+        # Initialize Healpix coordinates
+        counter = np.arange(0, hp.nside2npix(nside))
+        ra, dec = hp.pix2ang(nside, counter, True, lonlat=True)
+        coordinate = SkyCoord(ra=ra*u.deg, dec=dec*u.deg)
+
+        # If subarray_mult is not provided, set all multiplicities to 1
+        if subarray_mult is None:
+            subarray_mult = np.ones(len(array.telescopes))
+
+        # Iterate over telescopes
+        for i, tel in tqdm.tqdm(enumerate(array.telescopes)):
+            pointing = SkyCoord(ra=coord.az[i].degree, dec=coord.alt[i].degree, unit='deg')
+            r_fov = np.arctan((tel.camera_radius / tel.focal).to(u.dimensionless_unscaled)).to(u.deg)
+            mask = coordinate.separation(pointing) < r_fov
+
+            # Add intrinsic multiplicity for this telescope
+            map_multiplicity[mask] += subarray_mult[i]
+        
+        R=np.sqrt(array.hFoV(m_cut=1)[0]/np.pi) + 5 #FORSE DA CAMBIARE QUESTO
+
+
+        #RING!
+
+        center = SkyCoord(az=array.pointing["az"], alt=array.pointing["alt"], frame='altaz')
+
+        # Define ring radius in degrees
+        ring_radius = 5 * u.deg
+
+        # Generate circle points around the center
+        angles = np.linspace(0, 2 * np.pi, 200)
+        az_ring = center.az + ring_radius * np.cos(angles)
+        alt_ring = center.alt + ring_radius * np.sin(angles)
+
+        ring = SkyCoord(az=az_ring, alt=alt_ring, frame='altaz')
+
+        # Convert to lon, lat as expected by hp.projplot (must be degrees)
+        lon = ring.az.deg
+        lat = ring.alt.deg
+
+        # Plot the ring over the HEALPix map
+        hp.projplot(lon, lat, 'r-', lonlat=True, linewidth=1.5)
+
+
+
+
+
+
+
+
+    
+        hp.cartview(map_multiplicity, rot=[array.pointing["az"].value, array.pointing["alt"].value],
+                lonra=[-R,R], latra=[-R,R], nest=True, cmap='viridis', title=f"{array.frame.site} div={array.div}")
+        # Annotate with axis labels:
+        plt.annotate('Azimuth (degrees)', xy=(0.5, -0.05), xycoords='axes fraction', ha='center', va='center')
+        plt.annotate('Altitude (degrees)', 
+                     xy=(-0.05, 0.5), xycoords='axes fraction', 
+                     ha='center', va='center', rotation='vertical')
+        hp.graticule(dpar=5, dmer=5, coord='G', color='gray', lw=0.5)
+       
+
+        plt.show()
 def table_multiplicity(array, subarray_mult=None, maximum_multiplicity=None, step=None, fig=None):
     """
        Make the table of the FoV and the multiplicity so we can see the part of the multiplicity that is going for the FoV. The question is how to do it.

@@ -257,10 +257,10 @@ class Array:
         return hfov, m_ave     
 
     
-    def hFoV(self, m_cut=0, return_multiplicity=False, subarray_mult=None):
+    def hFoV(self, m_cut=1, return_multiplicity=False, subarray_mult=None):
         """   
         Return a hyper field of view (hFoV) above a given multiplicity with optional subgroup handling.
-    
+        If the m_cut = 1 it means that it will take at least for one telescope :)
         Parameters
         ----------
         m_cut: float, optional
@@ -311,7 +311,8 @@ class Array:
             map_multiplicity[mask] += subarray_mult[i]
 
         # Calculate the hFoV and average multiplicity
-        mask_fov = map_multiplicity > m_cut
+        #np.greater_equal(map_multiplicity, m_cut)
+        mask_fov = np.greater_equal(map_multiplicity, m_cut)
         hfov = hp.nside2pixarea(nside, True) * np.sum(mask_fov)
         m_ave = np.mean(map_multiplicity[mask_fov])
 
@@ -792,6 +793,71 @@ class Array:
             tel.__point_to_altaz__(self.pointing["alt"], self.pointing["az"])
 
         self.__make_table__()
+
+
+
+        
+    def divergent_pointing_full_array_with_subarray(self, subarray, subgroups, div, complete_array=None,  ra=None, dec = None, alt=None, az=None, units="deg"):
+        """
+        Divergent pointing given a parameter div.
+        Update pointing of all telescopes of the array.
+
+        Parameters
+        ----------
+        div: float between 0 and 1
+        ra: float, optioanl
+            source ra 
+        dec: float, optional
+            source dec 
+        alt: float, optional
+            mean alt pointing
+        az: float, optional
+            mean az pointing
+        units: string, optional
+            either 'deg' (default) or 'rad'
+            
+        """
+        self.set_pointing_coord(ra=ra, dec = dec, alt=alt, az=az, units=units)
+        
+        self._div = div
+
+        
+        
+        if np.abs(div) > 1: #or div < 0:
+            print("[Error] The div abs value should be lower and 1.")
+           
+        elif div != 0:
+            #TO put the same barycenter maybe I could just change here instead of self.barycenter put the barycenter of the full_array, ask confirmation. Now at this point I should change the display as well
+            if complete_array is None:
+                G = pointing.pointG_position(self.barycenter, self.div, self.pointing["alt"], self.pointing["az"])
+
+            else:
+                G = pointing.pointG_position(complete_array.barycenter, self.div, self.pointing["alt"], self.pointing["az"])
+            
+            for tel in self.telescopes:
+                alt_tel, az_tel= pointing.tel_div_pointing(tel.position, G)
+               # print(f"the azimuth of tel 1 is{az_tel_1}")
+                if div < 0:
+                    az_tel=az_tel - np.pi 
+                 #   print(f"It was negative and the az_tel_1 is: {az_tel_1}")
+                tel.__point_to_altaz__(alt_tel*u.rad, az_tel*u.rad)
+                #print(f"The azimuth is {tel_1.__point_to_altaz__(alt_tel_1*u.rad, az_tel_1*u.rad)}")
+           
+                
+                #print(f"the azimuth of tel_2 is{az_tel_2}")
+            self.__make_table__(complete_array=complete_array)
+            subarray.divergent_pointing(subarray=subarray, div=div, complete_array=complete_array,  ra=ra, dec = dec, alt=alt, az=az, units="deg")
+            for src_idx_str, target_indices in subgroups.items():
+                src_idx = int(src_idx_str) - 1
+                for tgt_idx in target_indices:
+                    table_idx = tgt_idx - 5  # Adjust this if needed
+                    for col in ['p_x', 'p_y', 'p_z', 'zn', 'alt', 'az']:
+                        self.table[col][table_idx] = subarray.table[col][src_idx]
+                
+                
+
+        
+            
         
     def divergent_pointing(self, div, complete_array=None,  ra=None, dec = None, alt=None, az=None, units="deg"):
         """
