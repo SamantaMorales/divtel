@@ -7,7 +7,7 @@ from astroplan import Observer
 
 import astropy.units as u
 
-from astropy.coordinates import get_moon
+#from astropy.coordinates import get_moon
 from astropy.coordinates import get_sun
 
 from astropy.visualization import astropy_mpl_style, quantity_support
@@ -205,29 +205,29 @@ class CTA_Info:
         frame = AltAz(obstime=time, location=self.loc)
         return get_sun(time).transform_to(frame)
 
-    def get_moon_loc(self, timespan=False, timestep=None):
-        """
-        Return Moon location given time and location.
+    # def get_moon_loc(self, timespan=False, timestep=None):
+    #     """
+    #     Return Moon location given time and location.
         
-        Parameters
-        ----------
-        timespan: bool, optional 
-            If True, it returns the location of Moon as a function of time
-        timestep: array, astropy.Quantity, optional 
-            When timespan is True, timestep can be optioanlly used.
-            See CTA_Info._time_bin
+    #     Parameters
+    #     ----------
+    #     timespan: bool, optional 
+    #         If True, it returns the location of Moon as a function of time
+    #     timestep: array, astropy.Quantity, optional 
+    #         When timespan is True, timestep can be optioanlly used.
+    #         See CTA_Info._time_bin
 
-        Returns
-        -------
-        astropy.coordinates.get_moon
-        """
-        if timespan:
-            time = self._time_bin(timestep)
-        else:
-            time = self.t_obs
+    #     Returns
+    #     -------
+    #     astropy.coordinates.get_moon
+    #     """
+    #     if timespan:
+    #         time = self._time_bin(timestep)
+    #     else:
+    #         time = self.t_obs
 
-        frame = AltAz(obstime=time, location=self.loc)
-        return get_moon(time).transform_to(frame)
+    #     frame = AltAz(obstime=time, location=self.loc)
+    #     return get_moon(time).transform_to(frame)
 
     def set_source_loc(self, ra, dec, timespan=False, timestep=None, units='deg'):
         """
@@ -297,55 +297,55 @@ class CTA_Info:
         if verbose:
             self.info
 
-    def navigation_plot(self, timestep = None, **kwargs):
-        """
-        Navigation plot, which shows azimuth angles of Sun, Moon, and a source as a function of time.
+    # def navigation_plot(self, timestep = None, **kwargs):
+    #     """
+    #     Navigation plot, which shows azimuth angles of Sun, Moon, and a source as a function of time.
         
-        Parameters
-        ----------
-        timestep: array, astropy.Quantity, optional 
-            When timespan is True, timestep can be optioanlly used.
-            See CTA_Info._time_bin
-        kwargs: dict, optional
-             args for either `CTA_Info.set_source_loc` or `pyplot.scatter`.
-        """
-        if timestep is not None:
-            if type(timestep) != u.Quantity:
-                print("[Warning] The unit of timestep is assumed to be 'hour'.")
-                self._timestep = timestep*u.hour
-            else:
-                self._timestep = timestep
+    #     Parameters
+    #     ----------
+    #     timestep: array, astropy.Quantity, optional 
+    #         When timespan is True, timestep can be optioanlly used.
+    #         See CTA_Info._time_bin
+    #     kwargs: dict, optional
+    #          args for either `CTA_Info.set_source_loc` or `pyplot.scatter`.
+    #     """
+    #     if timestep is not None:
+    #         if type(timestep) != u.Quantity:
+    #             print("[Warning] The unit of timestep is assumed to be 'hour'.")
+    #             self._timestep = timestep*u.hour
+    #         else:
+    #             self._timestep = timestep
 
-        sun = self.get_sun_loc(timespan=True)
-        moon = self.get_moon_loc(timespan=True)
-        plt.plot(self._timestep, sun.alt, color='r', label='Sun')
-        plt.plot(self._timestep, moon.alt, color=[0.75]*3, ls='--', label='Moon')
+    #     sun = self.get_sun_loc(timespan=True)
+    #     moon = self.get_moon_loc(timespan=True)
+    #     plt.plot(self._timestep, sun.alt, color='r', label='Sun')
+    #     plt.plot(self._timestep, moon.alt, color=[0.75]*3, ls='--', label='Moon')
 
-        ra = kwargs.pop("ra", None)
-        dec = kwargs.pop("dec", None)
-        units = kwargs.pop("units", "deg")
-        if (ra is not None) and (dec is not None):
-            src = self.set_source_loc(ra=ra, dec=dec, timespan=True, units=units)
-        else:
-            src = self.set_source_loc(ra=self.source.icrs.ra, dec=self.source.icrs.dec, 
-                                      timespan=True, units=units)
+    #     ra = kwargs.pop("ra", None)
+    #     dec = kwargs.pop("dec", None)
+    #     units = kwargs.pop("units", "deg")
+    #     if (ra is not None) and (dec is not None):
+    #         src = self.set_source_loc(ra=ra, dec=dec, timespan=True, units=units)
+    #     else:
+    #         src = self.set_source_loc(ra=self.source.icrs.ra, dec=self.source.icrs.dec, 
+    #                                   timespan=True, units=units)
 
-        plt.plot(self._timestep, src.alt, lw=0.5, alpha=0.5, color="orange")
-        plt.scatter(self._timestep, src.alt,
-                    c= src.az.value, s=8,
-                    cmap='viridis',**kwargs)
+    #     plt.plot(self._timestep, src.alt, lw=0.5, alpha=0.5, color="orange")
+    #     plt.scatter(self._timestep, src.alt,
+    #                 c= src.az.value, s=8,
+    #                 cmap='viridis',**kwargs)
 
-        plt.fill_between(self._timestep, 0, 90*u.deg,
-                         sun.alt < -0*u.deg, color='0.5', zorder=0)
-        plt.fill_between(self._timestep, 0*u.deg, 90*u.deg,
-                         sun.alt < -18*u.deg, color='k', zorder=0)
+    #     plt.fill_between(self._timestep, 0, 90*u.deg,
+    #                      sun.alt < -0*u.deg, color='0.5', zorder=0)
+    #     plt.fill_between(self._timestep, 0*u.deg, 90*u.deg,
+    #                      sun.alt < -18*u.deg, color='k', zorder=0)
 
-        plt.colorbar().set_label('Azimuth [deg]')
-        plt.legend(loc='upper left')
-        plt.xlim(-12*u.hour, 12*u.hour)
-        plt.xticks((np.arange(13)*2-12)*u.hour)
-        plt.ylim(0*u.deg, 90*u.deg)
-        plt.xlabel('Hours from EDT Midnight')
-        plt.ylabel('Altitude [deg]')
-        plt.show(block=False)
-        return plt
+    #     plt.colorbar().set_label('Azimuth [deg]')
+    #     plt.legend(loc='upper left')
+    #     plt.xlim(-12*u.hour, 12*u.hour)
+    #     plt.xticks((np.arange(13)*2-12)*u.hour)
+    #     plt.ylim(0*u.deg, 90*u.deg)
+    #     plt.xlabel('Hours from EDT Midnight')
+    #     plt.ylabel('Altitude [deg]')
+    #     plt.show(block=False)
+    #     return plt
